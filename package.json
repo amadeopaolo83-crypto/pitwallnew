@@ -1,0 +1,16 @@
+{
+  "name": "pitcomm-server",
+  "version": "1.1.0",
+  "description": "Server real-time per comunicazione box-auto in gare endurance",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18 <25"
+  },
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.5",
+    "web-push": "^3.6.7"
+  }
+}

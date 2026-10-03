@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+<title>PitComm</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0B0D0F" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="PitComm" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<!-- ============ LANDING ============ -->
+<div id="landing">
+  <div class="brand"><span class="mark"></span><h1>PitComm</h1><span>box &lt;&gt; auto</span></div>
+  <div>
+    <label for="teamCode">Codice team</label>
+    <input id="teamCode" maxlength="8" placeholder="ES. GARA24" autocomplete="off" autocapitalize="characters" />
+  </div>
+  <div class="role-row">
+    <button class="role-btn box" id="btnBox" onclick="joinAs('box')">Box<small>controllo &amp; impostazioni</small></button>
+    <button class="role-btn auto" id="btnAuto" onclick="joinAs('auto')">Auto<small>schermo in pista</small></button>
+  </div>
+  <div id="landingStatus" style="min-height:20px;font-size:13px;color:var(--muted);"></div>
+  <button class="install-btn" id="btnInstall" onclick="installApp()" hidden>⬇ Installa l'app sul telefono</button>
+  <div class="install-help" id="installHelp" hidden></div>
+  <details>
+    <summary>Server</summary>
+    <input id="serverUrl" placeholder="vuoto = questo stesso indirizzo" value="" />
+  </details>
+</div>
+
+<!-- ============ AUTO VIEW ============ -->
+<div id="autoView" hidden>
+  <button id="changeRoleBtn" onclick="resetRole()">◄ cambia</button>
+  <div class="timing-strip">
+    <div class="side" style="text-align:left;">
+      <div class="lbl">DAVANTI</div>
+      <span class="gap" id="timingGapAhead">—</span>
+      <div class="who" id="timingWhoAhead"></div>
+    </div>
+    <div style="text-align:center;">
+      <div class="lbl">POSIZIONE</div>
+      <span id="timingPos" style="font-size:20px;font-weight:700;color:var(--text);">—</span>
+    </div>
+    <div class="side" style="text-align:right;">
+      <div class="lbl">DIETRO</div>
+      <span class="gap" id="timingGapBehind">—</span>
+      <div class="who" id="timingWhoBehind"></div>
+    </div>
+  </div>
+  <div class="fuel-shell">
+    <div class="fuel-label"><span>CARBURANTE</span><span id="fuelPct">100%</span></div>
+    <div class="fuel-track"><div class="fuel-fill" id="fuelFill" style="width:100%;background:#3ECF6E;"></div></div>
+  </div>
+  <div class="quick-grid" id="quickGrid"></div>
+</div>
+
+<div id="flashOverlay" hidden><div class="txt" id="flashText"></div></div>
+
+<div id="rotateHint" hidden>
+  <div class="display" style="font-size:22px;">Ruota il telefono in orizzontale</div>
+  <div style="color:var(--muted);font-size:13px;">lo schermo deve restare bloccato in landscape</div>
+</div>
+
+<!-- ============ BOX VIEW ============ -->
+<div id="boxView" hidden>
+  <div class="box-header">
+    <h2>PitComm · Box</h2>
+    <span class="code-pill" id="boxCodePill">—</span>
+  </div>
+  <button id="changeRoleBtn" onclick="resetRole()">◄ cambia ruolo / codice</button>
+  <div class="card">
+    <h3>Notifiche</h3>
+    <span class="mono" id="pushStatus" style="font-size:12px;color:var(--muted);">In attivazione…</span>
+  </div>
+
+  <!-- Gara: finche' e' avviata il server si tiene sveglio da solo -->
+  <div class="card">
+    <h3>Gara</h3>
+    <div class="row"><span class="mono" id="raceStatusLabel" style="font-size:12px;">Gara ferma · il server può spegnersi se nessuno lo usa</span></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn state-btn green" id="btnRaceStart" onclick="startRace()">Avvio gara</button>
+      <button class="btn state-btn red" id="btnRaceStop" onclick="stopRace()">Fine gara</button>
+    </div>
+  </div>
+
+  <!-- 1. Carburante e stato in pista / ai box -->
+  <div class="card">
+    <h3>Carburante &amp; autonomia</h3>
+    <div class="row"><span class="mono" id="fuelValLabel">Livello: 100%</span></div>
+    <div class="row"><span class="mono" id="litersNowLabel" style="font-size:12px;">Litri in serbatoio: —</span></div>
+    <div class="row"><span class="mono" id="autonomyLiveLabel" style="font-size:12px;">Autonomia stimata: —</span></div>
+
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" id="trackStatusLabel">Stato: ai box</span>
+    </div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn state-btn green" id="btnOnTrack" onclick="setOnTrack(true)">In pista</button>
+      <button class="btn state-btn orange" id="btnAtBox" onclick="setOnTrack(false)">Ai box</button>
+    </div>
+  </div>
+
+  <!-- 2. Messaggi a schermo intero -->
+  <div class="card">
+    <h3>Messaggi a schermo intero</h3>
+    <div id="flashEditor"></div>
+    <button class="btn small" onclick="addFlashPreset()">+ aggiungi preset</button>
+  </div>
+
+  <!-- 3. Capienza, livello di partenza, rifornimento -->
+  <div class="card">
+    <h3>Serbatoio</h3>
+    <div class="row">
+      <span class="mono" style="font-size:12px;">Capienza serbatoio (L)</span>
+    </div>
+    <div class="row"><input type="number" id="tankCapacityInput" placeholder="es. 100"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="setTankCapacity()">Imposta capienza</button></div>
+
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" style="font-size:12px;">Livello di partenza (se non è pieno)</span>
+    </div>
+    <div class="row"><input type="number" id="startingLitersInput" placeholder="Litri attualmente presenti"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="setStartingLiters()">Imposta livello attuale</button></div>
+
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" style="font-size:12px;">Rifornimento</span>
+    </div>
+    <div class="row"><input type="number" id="refuelLitersInput" placeholder="Litri appena riforniti"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="doRefuel()">Rifornisci</button></div>
+  </div>
+
+  <!-- 4. Schermo auto -->
+  <div class="card">
+    <h3>Schermo auto</h3>
+    <div class="row"><span>Modalità notte</span>
+      <label class="toggle"><input type="checkbox" id="dayModeToggle" onchange="sendDayMode()"><span class="knob"></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Consumo</h3>
+    <div class="row">
+      <span class="mono" id="rateLabel" style="font-size:12px;">Consumo stimato: non ancora impostato</span>
+    </div>
+    <div class="row"><input type="number" id="knownRateLph" placeholder="Consumo (L/ora)" step="0.1"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="setKnownRate()">Imposta consumo</button></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="markDryAndCalibrate()">Calibra: serbatoio a secco ora</button></div>
+  </div>
+
+  <div class="card">
+    <h3>Distacchi</h3>
+    <div class="row seg" id="timingSourceSeg">
+      <button class="btn seg-btn" id="segServer" onclick="setTimingSource('server', true)">Dalla classifica</button>
+      <button class="btn seg-btn" id="segManual" onclick="setTimingSource('manual', true)">Manuali</button>
+    </div>
+
+    <!-- ---- sorgente: classifica AUB ---- -->
+    <div id="timingServerPane">
+      <div class="row"><span class="mono" id="aubStatusLabel" style="font-size:12px;">Stato: non collegato</span></div>
+      <div class="row"><input type="number" id="aubDriverId" placeholder="Numero di gara della vettura"></div>
+      <div class="row" style="display:flex;gap:8px;">
+        <button class="btn primary" style="flex:1" onclick="aubConnect(this)">Collega</button>
+        <button class="btn small" style="flex:1" onclick="aubDisconnect()">Scollega</button>
+      </div>
+      <details style="margin-top:10px;">
+        <summary>Credenziali (solo se il server non le ha già)</summary>
+        <div class="row"><input type="text" id="aubUrl" placeholder="https://aub.esempio.it" autocomplete="off"></div>
+        <div class="row"><input type="text" id="aubUser" placeholder="Utente della squadra" autocomplete="username"></div>
+        <div class="row"><input type="password" id="aubPass" placeholder="Password" autocomplete="current-password"></div>
+        <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Lasciali vuoti se utente e password sono già impostati sul server (AUB_URL, AUB_USER, AUB_PASS): è il posto giusto dove tenerli.</span></div>
+      </details>
+    </div>
+
+    <!-- ---- sorgente: inserimento manuale ---- -->
+    <div id="timingManualPane" hidden>
+      <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Il collegamento alla classifica resta spento finché sei su questa modalità.</span></div>
+      <div class="row"><input type="number" id="timingPosInput" placeholder="Posizione"></div>
+      <div class="row"><input type="text" id="timingGapAheadInput" placeholder="Distacco dal davanti es. +1.2s"></div>
+      <div class="row"><input type="text" id="timingNameAheadInput" placeholder="Chi hai davanti (squadra o numero)"></div>
+      <div class="row"><input type="text" id="timingGapBehindInput" placeholder="Distacco dal dietro es. -0.8s"></div>
+      <div class="row"><input type="text" id="timingNameBehindInput" placeholder="Chi hai dietro (squadra o numero)"></div>
+      <div class="row"><button class="btn primary" style="width:100%" onclick="sendTiming(this)">Invia distacchi all'auto</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Pulsanti rapidi auto (4)</h3>
+    <div id="qbEditor"></div>
+    <button class="btn" onclick="saveQuickButtons()">Salva pulsanti</button>
+  </div>
+
+  <div class="card">
+    <h3>Messaggi ricevuti dall'auto</h3>
+    <div id="log"></div>
+    <button class="btn small" style="margin-top:10px;" onclick="clearLog()">Cancella cronologia</button>
+  </div>
+</div>
+
+
+<!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
+     dipendenze, e le funzioni restano globali come le vogliono gli onclick
+     scritti nel markup. core.js per primo, app.js per ultimo. -->
+<script src="js/core.js"></script>
+<script src="js/push.js"></script>
+<script src="js/connection.js"></script>
+<script src="js/autoview.js"></script>
+<script src="js/fuel.js"></script>
+<script src="js/boxview.js"></script>
+<script src="js/timing.js"></script>
+<script src="js/race.js"></script>
+<script src="js/install.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+  :root{
+    --bg:#0B0D0F;
+    --panel:#14171A;
+    --panel-2:#1C2024;
+    --line:#262B30;
+    --text:#E9EDEF;
+    --muted:#8A9199;
+    --yellow:#F5C518;
+    --red:#E63946;
+    --green:#3ECF6E;
+    --cyan:#2FB6C4;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:'Inter',sans-serif;
+    -webkit-user-select:none;user-select:none;
+    overscroll-behavior:none;
+  }
+  h1,h2,h3,.display{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.04em;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  [hidden]{display:none!important;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select{font-family:inherit;}
+
+  /* ---------- LANDING ---------- */
+  #landing{
+    min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;gap:28px;text-align:center;
+    background:
+      radial-gradient(circle at 50% -10%, #1a1e22 0%, var(--bg) 60%);
+  }
+  .brand{display:flex;align-items:baseline;gap:10px;}
+  .brand .mark{width:14px;height:14px;background:var(--yellow);border-radius:2px;box-shadow:0 0 18px var(--yellow);}
+  .brand h1{font-size:28px;margin:0;color:var(--text);}
+  .brand span{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;}
+  #landing label{display:block;font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
+  #teamCode{
+    width:260px;max-width:70vw;text-align:center;font-family:'JetBrains Mono',monospace;font-size:26px;
+    letter-spacing:.2em;background:var(--panel);border:1px solid var(--line);color:var(--yellow);
+    border-radius:10px;padding:14px 10px;text-transform:uppercase;
+  }
+  #teamCode:focus{outline:none;border-color:var(--yellow);}
+  .role-row{display:flex;gap:16px;}
+  .role-btn{
+    width:150px;padding:22px 10px;border-radius:14px;border:1px solid var(--line);
+    background:var(--panel);color:var(--text);font-family:'Oswald',sans-serif;font-size:20px;
+    letter-spacing:.05em;text-transform:uppercase;transition:.15s;
+  }
+  .role-btn:active{transform:scale(.96);}
+  .role-btn.box{border-color:var(--cyan);}
+  .role-btn.auto{border-color:var(--yellow);}
+  .role-btn small{display:block;font-family:'Inter',sans-serif;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;margin-top:4px;}
+  details{color:var(--muted);font-size:12px;}
+  details input{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 8px;width:220px;}
+
+  /* Installazione dell'app: pulsante discreto sotto la scelta del ruolo. */
+  .install-btn{
+    background:transparent;color:var(--cyan);border:1px solid var(--cyan);border-radius:10px;
+    padding:10px 18px;font-size:13px;font-weight:600;
+  }
+  .install-btn:active{transform:scale(.97);}
+  .install-help{
+    max-width:300px;font-size:12px;line-height:1.5;color:var(--muted);
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    -webkit-user-select:text;user-select:text;
+  }
+
+  #changeRoleBtn{
+    position:fixed;top:10px;left:10px;z-index:70;
+    background:#0B0D0F;color:var(--yellow);border:2px solid var(--yellow);
+    border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;
+    font-family:'Inter',sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.5);
+  }
+  #boxView #changeRoleBtn{ position:static;display:inline-block;margin-bottom:14px; }
+  #autoView{
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    background:var(--bg);
+  }
+  body.night #autoView{ background:#000; }
+  body.night #autoView .fuel-shell, body.night .quick-btn{ filter:brightness(.8); }
+
+  .fuel-shell{padding:14px 18px 6px;}
+  .fuel-label{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:6px;}
+  .fuel-track{height:26px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden;}
+  .fuel-fill{height:100%;transition:width .6s ease, background-color .6s ease;}
+
+  .timing-strip{
+    display:flex;justify-content:center;align-items:center;
+    padding:8px 18px;font-family:'JetBrains Mono',monospace;
+    border-bottom:1px solid var(--line);gap:clamp(20px,6vw,60px);
+  }
+  .timing-strip .gap{color:var(--yellow);font-size:16px;font-weight:700;}
+  .timing-strip .lbl{font-size:10px;color:var(--muted);}
+  .timing-strip .side{min-width:0;max-width:min(34vw,220px);}
+  /* Il nome e' un appoggio, non un dato da leggere in curva: piccolo, spento e
+     troncato, perche' una squadra dal nome lungo non deve allargare la striscia
+     e spingere fuori schermo il distacco, che invece serve. */
+  .timing-strip .who{
+    font-size:11px;color:var(--muted);font-weight:500;line-height:1.3;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+  }
+
+  .quick-grid{
+    flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
+    gap:12px;padding:12px 18px 18px;
+  }
+  .quick-btn{
+    border-radius:16px;border:2px solid transparent;color:#0B0D0F;
+    font-family:'Oswald',sans-serif;font-size:clamp(20px,4vw,34px);text-transform:uppercase;
+    display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;
+    transition:transform .08s, box-shadow .2s;
+  }
+  .quick-btn:active{transform:scale(.97);}
+  .quick-btn.flashing{box-shadow:0 0 0 6px #fff inset, 0 0 40px #fff; animation:pulseSend .4s ease;}
+  @keyframes pulseSend{0%{filter:brightness(1.6)}100%{filter:brightness(1)}}
+
+  #flashOverlay{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:6vw;text-align:center;z-index:50;
+  }
+  #flashOverlay .txt{font-family:'Oswald',sans-serif;font-size:clamp(32px,8vw,90px);color:#0B0D0F;text-transform:uppercase;line-height:1.05;}
+
+  #rotateHint{
+    position:fixed;inset:0;background:var(--bg);color:var(--text);display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:60;
+  }
+
+  /* ---------- BOX VIEW ---------- */
+  #boxView{min-height:100dvh;padding:18px 16px 60px;max-width:640px;margin:0 auto;}
+  .box-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .box-header h2{margin:0;font-size:20px;}
+  .code-pill{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow);border:1px solid var(--line);border-radius:20px;padding:4px 12px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .card h3{margin:0 0 12px;font-size:14px;color:var(--muted);}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .row:last-child{margin-bottom:0;}
+  .toggle{position:relative;width:50px;height:28px;background:var(--panel-2);border-radius:20px;border:1px solid var(--line);}
+  .toggle input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;}
+  .toggle .knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:.2s;}
+  .toggle input:checked + .knob{left:24px;background:var(--yellow);}
+  input[type=range]{flex:1;accent-color:var(--yellow);}
+  input[type=number], input[type=text]{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;width:100%;
+  }
+  input[type=color]{width:38px;height:34px;border:none;border-radius:8px;background:none;padding:0;}
+  .qb-row{display:grid;grid-template-columns:1fr 44px;gap:8px;margin-bottom:8px;align-items:center;}
+  .flash-row{display:grid;grid-template-columns:1fr 44px 60px auto;gap:8px;margin-bottom:8px;align-items:center;}
+  .flash-row input[type=number]{width:60px;}
+  .btn{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 14px;font-size:13px;transition:background .15s,color .15s,border-color .15s;}
+  .btn.primary{background:var(--yellow);color:#0B0D0F;border-color:var(--yellow);font-weight:600;}
+  .btn.small{padding:8px 10px;font-size:12px;}
+  .btn.sent-confirm{background:var(--green)!important;color:#0B0D0F!important;border-color:var(--green)!important;}
+
+  /* Pulsanti che mostrano uno stato (in pista / ai box, avvio / fine gara):
+     quello attivo si accende, l'altro resta spento. */
+  .btn.state-btn{flex:1;min-height:48px;opacity:.7;}
+  .btn.state-btn.on{opacity:1;font-weight:700;color:#0B0D0F;}
+  .btn.state-btn.on.green{background:#3ECF6E;border-color:#3ECF6E;box-shadow:0 0 14px rgba(62,207,110,.55);}
+  .btn.state-btn.on.orange{background:#F5A623;border-color:#F5A623;box-shadow:0 0 14px rgba(245,166,35,.55);}
+  .btn.state-btn.on.red{background:#E63946;border-color:#E63946;color:#fff;box-shadow:0 0 14px rgba(230,57,70,.55);}
+
+  /* Selettore della sorgente distacchi: due bottoni affiancati, quello attivo
+     acceso come i pulsanti primari, cosi' si vede a colpo d'occhio da quale
+     delle due strade sta arrivando il dato. */
+  .seg{display:flex;gap:0;}
+  .seg .seg-btn{flex:1;border-radius:0;}
+  .seg .seg-btn:first-child{border-radius:8px 0 0 8px;}
+  .seg .seg-btn:last-child{border-radius:0 8px 8px 0;border-left:none;}
+  .seg .seg-btn.active{background:var(--yellow);color:#0B0D0F;border-color:var(--yellow);font-weight:600;}
+  #log{max-height:200px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:6px;}
+  .log-item{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--panel-2);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;}
+  .log-item .t{color:var(--muted);}
