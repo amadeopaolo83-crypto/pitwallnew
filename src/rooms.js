@@ -39,6 +39,18 @@ function getRoomState(code) {
         stale: false,
         updatedAt: null,
       },
+      // Lettura dal nostro ponte (alternativa ad AUB).
+      ponte: {
+        connected: false,
+        status: "spento",
+        error: null,
+        provider: null,
+        eventName: null,
+        driverNumber: null,
+        session: null,
+        flag: null,
+        updatedAt: null,
+      },
       pushSubscriptions: [],
       fuelSystem: {
         tankCapacityLiters: 100,
@@ -52,7 +64,7 @@ function getRoomState(code) {
       race: { active: false, startedAt: null },
       // true finche' nessun dispositivo ha rimandato i propri valori dopo un
       // riavvio del server; si spegne da solo, una voce alla volta.
-      fresh: { fuel: true, buttons: true, race: true },
+      fresh: { fuel: true, buttons: true, race: true, ponte: true },
     });
   }
   return rooms.get(code);

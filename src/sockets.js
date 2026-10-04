@@ -6,6 +6,7 @@
 const { getRoomState } = require("./rooms");
 const { notifyBoxDevices } = require("./push");
 const aub = require("./aub");
+const ponte = require("./ponte");
 const keepalive = require("./keepalive");
 
 function registra(io) {
@@ -168,6 +169,22 @@ function registra(io) {
         status: "spento",
         error: null,
       });
+    });
+
+    // BOX -> server: legge i distacchi dal nostro ponte, che traduce i vari siti di
+    // live timing. Servono l'indirizzo della pagina dell'evento e il numero della vettura.
+    socket.on("ponteConnect", ({ url, number } = {}, ack) => {
+      if (!joinedCode) return ack && ack({ ok: false, error: "non sei in una stanza" });
+      const res = ponte.start(joinedCode, url, number);
+      if (res.ok) getRoomState(joinedCode).fresh.ponte = false;
+      ack && ack(res);
+    });
+
+    socket.on("ponteDisconnect", () => {
+      if (!joinedCode) return;
+      getRoomState(joinedCode).fresh.ponte = false;
+      ponte.stop(joinedCode);
+      ponte.setStatus(joinedCode, { connected: false, status: "spento", error: null, session: null, flag: null });
     });
 
     socket.on("disconnect", () => {

@@ -161,6 +161,7 @@
     <h3>Distacchi</h3>
     <div class="row seg" id="timingSourceSeg">
       <button class="btn seg-btn" id="segServer" onclick="setTimingSource('server', true)">Dalla classifica</button>
+      <button class="btn seg-btn" id="segPonte" onclick="setTimingSource('ponte', true)">Nostro</button>
       <button class="btn seg-btn" id="segManual" onclick="setTimingSource('manual', true)">Manuali</button>
     </div>
 
@@ -179,6 +180,18 @@
         <div class="row"><input type="password" id="aubPass" placeholder="Password" autocomplete="current-password"></div>
         <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Lasciali vuoti se utente e password sono già impostati sul server (AUB_URL, AUB_USER, AUB_PASS): è il posto giusto dove tenerli.</span></div>
       </details>
+    </div>
+
+    <!-- ---- sorgente: il nostro ponte (legge i siti di live timing) ---- -->
+    <div id="timingPontePane" hidden>
+      <div class="row"><span class="mono" id="ponteStatusLabel" style="font-size:12px;">Stato: non collegato</span></div>
+      <div class="row"><input type="text" id="ponteUrl" placeholder="Indirizzo della pagina dell'evento" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="row"><input type="text" id="ponteNumber" placeholder="Numero di gara della vettura" inputmode="numeric" autocomplete="off"></div>
+      <div class="row" style="display:flex;gap:8px;">
+        <button class="btn primary" style="flex:1" onclick="ponteConnect(this)">Collega</button>
+        <button class="btn small" style="flex:1" onclick="ponteDisconnect()">Scollega</button>
+      </div>
+      <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Legge i distacchi dal nostro ponte, che sa leggere i vari siti di live timing, senza passare da AUB. Incolla l'indirizzo della pagina dell'evento e il numero di gara. Se l'evento non \u00e8 ancora pubblicato resta in attesa.</span></div>
     </div>
 
     <!-- ---- sorgente: inserimento manuale ---- -->

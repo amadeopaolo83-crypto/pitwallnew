@@ -24,6 +24,12 @@ const AUB_PASS = process.env.AUB_PASS || "";
 // SELF_URL a mano. Se manca, il keep-alive resta spento.
 const SELF_URL = (process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || "").replace(/\/+$/, "");
 
+// Il ponte (PitPonte): il servizio che legge i siti di live timing e li traduce.
+// BRIDGE_URL e' il suo indirizzo, BRIDGE_TOKEN la parola d'ordine condivisa.
+// Senza BRIDGE_URL la modalita' "Nostro" resta spenta.
+const BRIDGE_URL = (process.env.BRIDGE_URL || "").replace(/\/+$/, "");
+const BRIDGE_TOKEN = process.env.BRIDGE_TOKEN || "";
+
 module.exports = {
   PORT,
   VAPID_PUBLIC_KEY,
@@ -32,4 +38,6 @@ module.exports = {
   AUB_USER,
   AUB_PASS,
   SELF_URL,
+  BRIDGE_URL,
+  BRIDGE_TOKEN,
 };

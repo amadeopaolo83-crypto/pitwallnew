@@ -167,6 +167,7 @@
   .seg .seg-btn{flex:1;border-radius:0;}
   .seg .seg-btn:first-child{border-radius:8px 0 0 8px;}
   .seg .seg-btn:last-child{border-radius:0 8px 8px 0;border-left:none;}
+  .seg .seg-btn:not(:first-child){border-left:none;}
   .seg .seg-btn.active{background:var(--yellow);color:#0B0D0F;border-color:var(--yellow);font-weight:600;}
   #log{max-height:200px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:6px;}
   .log-item{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--panel-2);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;}

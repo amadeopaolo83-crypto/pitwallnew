@@ -91,6 +91,14 @@ function restoreIntoFreshServer(state){
     }
   }
 
+  // Lettura dal nostro ponte: se stava andando, riparte.
+  if(fresh.ponte){
+    const f = load('pc_ponte', null);
+    if(f && f.code === code && f.active && f.url && f.number && (Date.now() - f.at) < FUEL_LOCAL_MAX_MS){
+      socket.emit('ponteConnect', { url: f.url, number: f.number });
+    }
+  }
+
   return fuelRestored;
 }
 
@@ -113,6 +121,7 @@ function applyState(state){
   renderFuel(state.fuel.percent);
   if(state.timing) renderTiming(state.timing);
   if(state.aub) renderAubStatus(state.aub);
+  if(state.ponte) renderPonteStatus(state.ponte);
   if(state.race) renderRace(state.race);
   renderQuickGrid();
   renderQbEditor();
@@ -132,6 +141,7 @@ function registerListeners(){
   socket.on('raceStatus', renderRace);
   socket.on('timingUpdate', renderTiming);
   socket.on('aubStatus', renderAubStatus);
+  socket.on('ponteStatus', renderPonteStatus);
 }
 
 function resetRole(){

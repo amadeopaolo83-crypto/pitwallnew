@@ -9,6 +9,7 @@
 //   sockets.js    gli eventi che box e auto si scambiano
 //   push.js       le notifiche ai telefoni del box
 //   aub.js        il collegamento al server di elaborazione classifica
+//   ponte.js      i distacchi letti dal nostro ponte (PitPonte)
 //   keepalive.js  tiene sveglio il server mentre una gara e' in corso
 
 const http = require("http");
@@ -17,6 +18,7 @@ const { Server } = require("socket.io");
 const { PORT } = require("./config");
 const { serviRichiesta } = require("./static");
 const aub = require("./aub");
+const ponte = require("./ponte");
 const sockets = require("./sockets");
 
 const httpServer = http.createServer(serviRichiesta);
@@ -26,6 +28,7 @@ const io = new Server(httpServer, {
 });
 
 aub.init(io);
+ponte.init(io);
 sockets.registra(io);
 
 httpServer.listen(PORT, () => {

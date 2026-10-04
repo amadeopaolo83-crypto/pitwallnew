@@ -6,6 +6,7 @@ l'app web e la comunicazione in tempo reale: un indirizzo solo per tutti.
 - **Box**: carburante e autonomia, messaggi a schermo intero, pulsanti rapidi, distacchi.
 - **Auto**: schermo sempre acceso in orizzontale con carburante, distacchi e 4 pulsanti.
 - **Gara**: *Avvio gara* / *Fine gara* tengono sveglio il server solo quando serve.
+- **Distacchi** da tre fonti: dalla classifica **AUB**, dal **nostro ponte** (PitPonte), o a mano.
 - **App installabile** sul telefono, con icona nella schermata Home.
 
 ---
@@ -24,6 +25,7 @@ pitcomm/
 │   ├── sockets.js          messaggi tra box e auto
 │   ├── push.js             notifiche push al box
 │   ├── aub.js              collegamento alla classifica AUBServer
+│   ├── ponte.js            distacchi letti dal nostro ponte (PitPonte)
 │   └── keepalive.js        tiene sveglio il server durante la gara
 └── public/                 l'app che si apre sul telefono
     ├── index.html
@@ -86,6 +88,7 @@ Controllo: nella radice del repository devi vedere `src`, `public`,
    | `VAPID_PUBLIC_KEY` | dal file `chiavi-render-NON-CARICARE-SU-GITHUB.txt` |
    | `VAPID_PRIVATE_KEY` | dal file `chiavi-render-NON-CARICARE-SU-GITHUB.txt` |
    | `AUB_URL`, `AUB_USER`, `AUB_PASS` | copiati dal vecchio servizio Render |
+   | `BRIDGE_URL`, `BRIDGE_TOKEN` | indirizzo del ponte e parola d'ordine (vedi il README del ponte) |
 
    Senza chiavi il server parte lo stesso, ma le notifiche restano spente.
 4. **Create Web Service** e attendi la fine della pubblicazione.
@@ -122,19 +125,59 @@ una nuova pubblicazione.
 
 ---
 
-## 6. Aggiornare l'app
+## 6. Distacchi: le tre modalità
+
+Nella scheda **Distacchi** del box ci sono tre pulsanti. Passando da uno all'altro
+il collegamento precedente si stacca da solo.
+
+- **Dalla classifica**: come prima, passa da AUB.
+- **Nostro**: legge i distacchi dal nostro **ponte** (PitPonte), un secondo servizio
+  che sa leggere i siti di live timing (oggi FICR) senza passare da AUB.
+- **Manuali**: li scrivi tu.
+
+### Usare "Nostro"
+
+1. Apri la pagina dell'evento sul live timing e copia il suo indirizzo, per esempio
+   `https://www.livetiming.ficr.it/cronoferrara/`.
+2. Nell'app: **Distacchi → Nostro**, incolla l'indirizzo, scrivi il **numero di gara**
+   della vettura e premi **Collega**.
+3. Lo stato dice cosa succede: *evento non ancora pubblicato* (resta in attesa e
+   riprova da solo), *in attesa di dati*, *in ascolto*, *vettura N non in
+   classifica*, oppure un errore (per esempio *nessun traduttore per questo sito*).
+
+Se un fornitore è nuovo o cambia, si aggiorna **solo il ponte**: questa app resta
+accesa e, appena il ponte è pronto, la lettura riparte da sola. Se il server di
+questa app si riavvia, la lettura riparte da sola.
+
+Per usarlo servono sul server le variabili `BRIDGE_URL` e `BRIDGE_TOKEN`: senza,
+il pulsante *Nostro* risponde che il ponte non è configurato.
+
+**Da verificare alla prima gara.** Il calcolo è stato provato su qualifiche di
+motocross. Per qualifiche e prove il distacco è la differenza fra i migliori giri;
+in gara usa l'intervallo che il sito calcola già. In gara controlla subito che
+posizione e vetture davanti e dietro abbiano senso, e se qualcosa non torna passa a
+**Manuali** e segnalalo.
+
+---
+
+## 7. Aggiornare l'app
 
 Ogni modifica a un file su GitHub fa ripubblicare Render in automatico. Non farlo
 durante una gara: il riavvio azzera lo stato (poi i telefoni lo ripristinano).
 
 ---
 
-## 7. Se qualcosa non va
+## 8. Se qualcosa non va
 
 | Problema | Cosa controllare |
 |---|---|
 | Pagina bianca 30-60 s | Il server si stava svegliando: attendi. |
 | "Impossibile raggiungere il server" | Il servizio su Render deve essere *Live*. |
 | Notifiche non attive | Le due chiavi su Render e il permesso notifiche del telefono. |
-| Distacchi in errore | `AUB_URL`, `AUB_USER`, `AUB_PASS` su Render, poi **Collega**. |
+| Distacchi AUB in errore | `AUB_URL`, `AUB_USER`, `AUB_PASS` su Render, poi **Collega**. Oppure prova **Nostro**. |
+| "Nostro": il ponte non è configurato | Mancano `BRIDGE_URL` e `BRIDGE_TOKEN` sul server di questa app. |
+| "Nostro": il ponte rifiuta la parola d'ordine | `BRIDGE_TOKEN` diverso fra app e ponte: devono coincidere. |
+| "Nostro": il ponte non risponde | Il ponte si sta svegliando (fino a un minuto) o è spento: controlla su Render. |
+| "Nostro": nessun traduttore per questo sito | Il fornitore non è ancora supportato dal ponte: serve aggiornare il ponte. |
+| "Nostro": evento non ancora pubblicato | L'evento non è ancora in elenco: resta in attesa e si collega da solo. |
 | Pagina non trovata | Controlla i nomi delle cartelle: `src`, `public`, `public/js`, `public/css`, `public/icons`. |
