@@ -80,8 +80,9 @@
   </div>
   <button id="changeRoleBtn" onclick="resetRole()">◄ cambia ruolo / codice</button>
   <div class="card">
-    <h3>Notifiche</h3>
-    <span class="mono" id="pushStatus" style="font-size:12px;color:var(--muted);">In attivazione…</span>
+    <h3>Messaggi ricevuti dall'auto</h3>
+    <div id="log"></div>
+    <button class="btn small" style="margin-top:10px;" onclick="clearLog()">Cancella cronologia</button>
   </div>
 
   <!-- Gara: finche' e' avviata il server si tiene sveglio da solo -->
@@ -160,7 +161,7 @@
   <div class="card">
     <h3>Distacchi</h3>
     <div class="row seg" id="timingSourceSeg">
-      <button class="btn seg-btn" id="segServer" onclick="setTimingSource('server', true)">Dalla classifica</button>
+      <button class="btn seg-btn" id="segServer" onclick="setTimingSource('server', true)">AUB</button>
       <button class="btn seg-btn" id="segPonte" onclick="setTimingSource('ponte', true)">Nostro</button>
       <button class="btn seg-btn" id="segManual" onclick="setTimingSource('manual', true)">Manuali</button>
     </div>
@@ -213,9 +214,8 @@
   </div>
 
   <div class="card">
-    <h3>Messaggi ricevuti dall'auto</h3>
-    <div id="log"></div>
-    <button class="btn small" style="margin-top:10px;" onclick="clearLog()">Cancella cronologia</button>
+    <h3>Notifiche</h3>
+    <span class="mono" id="pushStatus" style="font-size:12px;color:var(--muted);">In attivazione…</span>
   </div>
 </div>
 

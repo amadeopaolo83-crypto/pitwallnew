@@ -130,7 +130,7 @@ una nuova pubblicazione.
 Nella scheda **Distacchi** del box ci sono tre pulsanti. Passando da uno all'altro
 il collegamento precedente si stacca da solo.
 
-- **Dalla classifica**: come prima, passa da AUB.
+- **AUB**: come prima, passa dal server AUB.
 - **Nostro**: legge i distacchi dal nostro **ponte** (PitPonte), un secondo servizio
   che sa leggere i siti di live timing (oggi FICR) senza passare da AUB.
 - **Manuali**: li scrivi tu.
