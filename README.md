@@ -152,6 +152,24 @@ questa app si riavvia, la lettura riparte da sola.
 Per usarlo servono sul server le variabili `BRIDGE_URL` e `BRIDGE_TOKEN`: senza,
 il pulsante *Nostro* risponde che il ponte non è configurato.
 
+### Assoluta o categoria
+
+Sotto i tre pulsanti della fonte c'è la scelta **Sull'auto mostra: Assoluta / Categoria**.
+La fa il box e vale per tutti i telefoni della squadra.
+
+- **Assoluta**: posizione, davanti e dietro in classifica generale. Sotto la posizione
+  l'auto scrive la tua categoria e la tua posizione fra pari (per esempio `GOLD 1°`).
+- **Categoria**: posizione, davanti e dietro **solo fra i piloti della tua categoria**
+  (la scritta gialla sotto il nome sul sito). Sotto la posizione compare anche quella
+  assoluta (`GOLD · ass. 5°`).
+
+La categoria la conosce solo *Nostro*. Con AUB e con Manuali l'auto resta sull'assoluta
+anche se è scelta *Categoria*. Dopo un riavvio del server la scelta torna su *Assoluta*.
+
+Nei distacchi di categoria, in qualifica si usa la differenza di miglior giro; in gara,
+con gli stessi giri, la differenza dei tempi totali; se i giri sono diversi la somma
+degli intervalli del sito, e per i doppiati i giri di differenza (`1 giro`).
+
 **Da verificare alla prima gara.** Il calcolo è stato provato su qualifiche di
 motocross. Per qualifiche e prove il distacco è la differenza fra i migliori giri;
 in gara usa l'intervallo che il sito calcola già. In gara controlla subito che
@@ -162,7 +180,11 @@ posizione e vetture davanti e dietro abbiano senso, e se qualcosa non torna pass
 
 ## 7. Aggiornare l'app
 
-Ogni modifica a un file su GitHub fa ripubblicare Render in automatico. Non farlo
+Ogni modifica a un file su GitHub fa ripubblicare Render in automatico.
+
+**Dopo un aggiornamento dei file in `public/js` o `public/css`** cambia il numero
+`?v=3` nei collegamenti di `public/index.html` (per esempio `?v=4`): i telefoni tengono
+in memoria questi file fino a un'ora, e col numero nuovo li scaricano subito. Non farlo
 durante una gara: il riavvio azzera lo stato (poi i telefoni lo ripristinano).
 
 ---

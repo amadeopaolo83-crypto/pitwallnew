@@ -26,6 +26,7 @@ function getRoomState(code) {
         { id: 4, label: "Ripeti", color: "#bd10e0" },
       ],
       timing: null, // { position, gapAhead, gapBehind, updatedAt }
+      timingView: "assoluta", // cosa mostra l'auto: "assoluta" o "categoria"
       lastFlash: null,
       // Collegamento al server classifica (AUBServer). La password non sta
       // qui: lo stato viene mandato a tutti i dispositivi della stanza.

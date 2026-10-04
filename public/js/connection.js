@@ -119,6 +119,7 @@ function applyState(state){
     if(!fresh.fuel || fuelRestored) saveFuelLocal();
   }
   renderFuel(state.fuel.percent);
+  applyTimingView(state.timingView || 'assoluta');
   if(state.timing) renderTiming(state.timing);
   if(state.aub) renderAubStatus(state.aub);
   if(state.ponte) renderPonteStatus(state.ponte);
@@ -140,6 +141,7 @@ function registerListeners(){
   socket.on('quickButtonsUpdate', (q) => { quickButtons = q.buttons; save('pc_qb', quickButtons); renderQuickGrid(); renderQbEditor(); });
   socket.on('raceStatus', renderRace);
   socket.on('timingUpdate', renderTiming);
+  socket.on('timingViewUpdate', (v) => applyTimingView(v.view));
   socket.on('aubStatus', renderAubStatus);
   socket.on('ponteStatus', renderPonteStatus);
 }

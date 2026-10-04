@@ -41,6 +41,20 @@ function setTimingSource(sorgente, esplicito){
   }
 }
 
+// Scelta di cosa mostrare sull'auto: la fa il box, vale per tutti i telefoni della squadra.
+function setTimingView(view){
+  const v = view === 'categoria' ? 'categoria' : 'assoluta';
+  applyTimingView(v);
+  if(socket && socket.connected) socket.emit('timingViewUpdate', { view: v });
+}
+
+function applyTimingView(view){
+  timingView = view === 'categoria' ? 'categoria' : 'assoluta';
+  if($('segViewAss')) $('segViewAss').classList.toggle('active', timingView === 'assoluta');
+  if($('segViewCat')) $('segViewCat').classList.toggle('active', timingView === 'categoria');
+  if(lastTiming) renderTiming(lastTiming);
+}
+
 function aubConnect(btnEl){
   const driverId = $('aubDriverId').value.trim();
   if(!driverId){

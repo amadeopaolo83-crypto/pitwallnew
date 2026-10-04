@@ -14,7 +14,7 @@
 //
 // Formato della classifica che arriva dal ponte (campi usati):
 //   sessione: { tipo: "qualifica" | "gara", nome, categoria, bandiera }
-//   piloti:   [{ pos, numero, nome, migliorGiro, intervallo, intervalloTesto }]
+//   piloti:   [{ pos, numero, nome, classe, giri, migliorGiro, tempoTotale, intervallo, intervalloTesto }]
 //   con i tempi in secondi.
 
 const { getRoomState } = require("./rooms");
@@ -60,13 +60,61 @@ function schedaRivale(p) {
   };
 }
 
+const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+
+/**
+ * Distanza fra due piloti dell'elenco ordinato: `iDavanti` e' l'indice di chi sta
+ * davanti, `iDietro` di chi sta dietro. Ritorna { sec } (tempo) oppure { testo }
+ * (per esempio "1 giro"), oppure null se non si puo' dire.
+ *
+ * Qualifica e prove: differenza fra i migliori giri.
+ * Gara, in quest'ordine:
+ *   1. stesso numero di giri: differenza dei tempi totali (esatta);
+ *   2. altrimenti la somma degli intervalli fra i due (come li calcola il sito,
+ *      gestisce anche chi ha appena tagliato il traguardo e chi no);
+ *   3. se un intervallo non e' un tempo (doppiati): i giri di differenza.
+ */
+function distanzaTra(sessione, validi, iDavanti, iDietro) {
+  const a = validi[iDavanti];
+  const b = validi[iDietro];
+  if (sessione && sessione.tipo === "qualifica") {
+    const ga = num(a.migliorGiro);
+    const gb = num(b.migliorGiro);
+    return ga !== null && gb !== null && gb >= ga ? { sec: gb - ga } : null;
+  }
+  if (a.giri != null && a.giri === b.giri && num(a.tempoTotale) !== null && num(b.tempoTotale) !== null) {
+    const d = b.tempoTotale - a.tempoTotale;
+    if (d >= 0) return { sec: d };
+  }
+  let somma = 0;
+  let completa = true;
+  for (let k = iDavanti + 1; k <= iDietro; k++) {
+    const t = num(validi[k].intervallo);
+    if (t === null) { completa = false; break; }
+    somma += t;
+  }
+  if (completa) return { sec: somma };
+  if (a.giri != null && b.giri != null && a.giri - b.giri > 0) {
+    const g = a.giri - b.giri;
+    return { testo: `${g} ${g === 1 ? "giro" : "giri"}` };
+  }
+  return null;
+}
+
+const comeDavanti = (d) => (!d ? "" : d.testo ? d.testo : "+" + formatSeconds(d.sec));
+const comeDietro = (d) => (!d ? "" : d.testo ? d.testo : "-" + formatSeconds(d.sec));
+
 /**
  * Posizione e distacchi della vettura `numero`, oppure { trovata: false }.
  *
- * Nelle qualifiche e nelle prove conta il miglior giro: il distacco e' la
- * differenza fra i migliori giri. Nelle gare si usa l'intervallo che il sito
- * calcola gia': davanti quello della nostra riga, dietro quello della riga dopo.
- * In gara va riscontrato con dati reali: lo stato mostra sessione e bandiera.
+ * Due letture della stessa classifica:
+ *   - assoluta: chi sta subito davanti e dietro in classifica generale;
+ *   - di categoria: solo i piloti della stessa categoria (la scritta gialla sotto
+ *     il nome sul sito, campo `classe`), con la loro posizione fra pari.
+ *
+ * Nelle qualifiche e nelle prove i distacchi sono differenze di miglior giro; in
+ * gara si usa l'intervallo che il sito calcola gia' (assoluta) o la distanza
+ * descritta in distanzaTra (categoria). In gara va riscontrato con dati reali.
  */
 function computeTiming(sessione, piloti, numero) {
   const validi = piloti
@@ -78,18 +126,13 @@ function computeTiming(sessione, piloti, numero) {
   const mio = validi[i];
   const davanti = validi[i - 1] || null;
   const dietro = validi[i + 1] || null;
+  const inQualifica = sessione && sessione.tipo === "qualifica";
 
   let gapAhead = "";
   let gapBehind = "";
-  if (sessione && sessione.tipo === "qualifica") {
-    const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
-    const mioGiro = num(mio.migliorGiro);
-    if (mioGiro !== null && davanti && num(davanti.migliorGiro) !== null) {
-      gapAhead = "+" + formatSeconds(mioGiro - davanti.migliorGiro);
-    }
-    if (mioGiro !== null && dietro && num(dietro.migliorGiro) !== null) {
-      gapBehind = "-" + formatSeconds(dietro.migliorGiro - mioGiro);
-    }
+  if (inQualifica) {
+    gapAhead = davanti ? comeDavanti(distanzaTra(sessione, validi, i - 1, i)) : "";
+    gapBehind = dietro ? comeDietro(distanzaTra(sessione, validi, i, i + 1)) : "";
   } else {
     gapAhead = davanti ? formatGap(mio.intervallo, mio.intervalloTesto, "+") : "";
     gapBehind = dietro ? formatGap(dietro.intervallo, dietro.intervalloTesto, "-") : "";
@@ -97,19 +140,39 @@ function computeTiming(sessione, piloti, numero) {
 
   const avanti = schedaRivale(davanti);
   const indietro = schedaRivale(dietro);
-  return {
-    trovata: true,
-    timing: {
-      position: mio.pos,
-      gapAhead,
-      nameAhead: avanti.name,
-      numberAhead: avanti.number,
-      gapBehind,
-      nameBehind: indietro.name,
-      numberBehind: indietro.number,
-      updatedAt: Date.now(),
-    },
+  const timing = {
+    position: mio.pos,
+    gapAhead,
+    nameAhead: avanti.name,
+    numberAhead: avanti.number,
+    gapBehind,
+    nameBehind: indietro.name,
+    numberBehind: indietro.number,
+    updatedAt: Date.now(),
   };
+
+  // --- categoria ---
+  const classe = String(mio.classe || "").trim();
+  if (classe) {
+    const stessa = [];
+    validi.forEach((p, k) => {
+      if (String(p.classe || "").trim().toUpperCase() === classe.toUpperCase()) stessa.push(k);
+    });
+    const posCat = stessa.indexOf(i);
+    const kAvanti = posCat > 0 ? stessa[posCat - 1] : null;
+    const kDietro = posCat >= 0 && posCat < stessa.length - 1 ? stessa[posCat + 1] : null;
+    const catAvanti = schedaRivale(kAvanti === null ? null : validi[kAvanti]);
+    const catDietro = schedaRivale(kDietro === null ? null : validi[kDietro]);
+    timing.catName = classe;
+    timing.catPosition = posCat + 1;
+    timing.catGapAhead = kAvanti === null ? "" : comeDavanti(distanzaTra(sessione, validi, kAvanti, i));
+    timing.catNameAhead = catAvanti.name;
+    timing.catNumberAhead = catAvanti.number;
+    timing.catGapBehind = kDietro === null ? "" : comeDietro(distanzaTra(sessione, validi, i, kDietro));
+    timing.catNameBehind = catDietro.name;
+    timing.catNumberBehind = catDietro.number;
+  }
+  return { trovata: true, timing };
 }
 
 // ---------- rete ----------
@@ -170,8 +233,10 @@ function applica(code, link, r) {
   // Si rimanda ai telefoni solo quando qualcosa e' cambiato.
   const state = getRoomState(code);
   const prima = state.timing;
-  const cambiato = !prima || ["position", "gapAhead", "gapBehind", "nameAhead", "nameBehind", "numberAhead", "numberBehind"]
-    .some((k) => prima[k] !== c.timing[k]);
+  const cambiato = !prima || [
+    "position", "gapAhead", "gapBehind", "nameAhead", "nameBehind", "numberAhead", "numberBehind",
+    "catName", "catPosition", "catGapAhead", "catGapBehind", "catNameAhead", "catNameBehind", "catNumberAhead", "catNumberBehind",
+  ].some((k) => prima[k] !== c.timing[k]);
   state.timing = c.timing;
   if (cambiato) io.to(code).emit("timingUpdate", state.timing);
 }
@@ -269,5 +334,5 @@ module.exports = {
   start,
   stop,
   setStatus,
-  _test: { computeTiming, formatSeconds, formatGap, validaEvento },
+  _test: { computeTiming, distanzaTra, formatSeconds, formatGap, validaEvento },
 };

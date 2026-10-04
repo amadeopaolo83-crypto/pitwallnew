@@ -138,6 +138,13 @@ function registra(io) {
       io.to(joinedCode).emit("raceStatus", state.race);
     });
 
+    // BOX -> AUTO: cosa mostrare sull'auto, classifica assoluta o di categoria
+    socket.on("timingViewUpdate", ({ view } = {}) => {
+      if (!joinedCode || (view !== "assoluta" && view !== "categoria")) return;
+      getRoomState(joinedCode).timingView = view;
+      io.to(joinedCode).emit("timingViewUpdate", { view });
+    });
+
     // BOX -> AUTO: distacchi dal live timing (posizione, distacco davanti, distacco dietro)
     socket.on("timingUpdate", ({ position, gapAhead, gapBehind, nameAhead, nameBehind }) => {
       if (!joinedCode) return;

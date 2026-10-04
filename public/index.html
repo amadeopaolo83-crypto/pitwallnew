@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css" />
+<link rel="stylesheet" href="css/style.css?v=3" />
 </head>
 <body>
 
@@ -51,6 +51,7 @@
     <div style="text-align:center;">
       <div class="lbl">POSIZIONE</div>
       <span id="timingPos" style="font-size:20px;font-weight:700;color:var(--text);">—</span>
+      <div class="sub" id="timingPosSub"></div>
     </div>
     <div class="side" style="text-align:right;">
       <div class="lbl">DIETRO</div>
@@ -166,6 +167,12 @@
       <button class="btn seg-btn" id="segManual" onclick="setTimingSource('manual', true)">Manuali</button>
     </div>
 
+    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Sull'auto mostra:</span></div>
+    <div class="row seg" id="timingViewSeg">
+      <button class="btn seg-btn" id="segViewAss" onclick="setTimingView('assoluta')">Assoluta</button>
+      <button class="btn seg-btn" id="segViewCat" onclick="setTimingView('categoria')">Categoria</button>
+    </div>
+
     <!-- ---- sorgente: classifica AUB ---- -->
     <div id="timingServerPane">
       <div class="row"><span class="mono" id="aubStatusLabel" style="font-size:12px;">Stato: non collegato</span></div>
@@ -223,15 +230,15 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js"></script>
-<script src="js/push.js"></script>
-<script src="js/connection.js"></script>
-<script src="js/autoview.js"></script>
-<script src="js/fuel.js"></script>
-<script src="js/boxview.js"></script>
-<script src="js/timing.js"></script>
-<script src="js/race.js"></script>
-<script src="js/install.js"></script>
-<script src="js/app.js"></script>
+<script src="js/core.js?v=3"></script>
+<script src="js/push.js?v=3"></script>
+<script src="js/connection.js?v=3"></script>
+<script src="js/autoview.js?v=3"></script>
+<script src="js/fuel.js?v=3"></script>
+<script src="js/boxview.js?v=3"></script>
+<script src="js/timing.js?v=3"></script>
+<script src="js/race.js?v=3"></script>
+<script src="js/install.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>

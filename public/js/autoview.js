@@ -36,16 +36,33 @@ function descriviRivale(numero, nome){
   return [numero ? '#' + numero : '', nome || ''].filter(Boolean).join(' · ');
 }
 
+// Cosa mostra l'auto: classifica "assoluta" oppure "categoria" (solo i piloti della
+// stessa categoria, la scritta gialla sotto il nome sul sito). La sceglie il box.
+let timingView = 'assoluta';
+let lastTiming = null;
+
 function renderTiming(t){
   if(!t) return;
-  if($('timingPos')) $('timingPos').textContent = (t.position ?? '—');
-  if($('timingGapAhead')) $('timingGapAhead').textContent = t.gapAhead || '—';
-  if($('timingGapBehind')) $('timingGapBehind').textContent = t.gapBehind || '—';
+  lastTiming = t;
+  // Se la fonte non conosce la categoria (AUB, inserimento manuale) si resta sull'assoluta.
+  const cat = timingView === 'categoria' && t.catName;
+  const pos = cat ? t.catPosition : t.position;
+  const gapA = cat ? t.catGapAhead : t.gapAhead;
+  const gapB = cat ? t.catGapBehind : t.gapBehind;
+  if($('timingPos')) $('timingPos').textContent = (pos ?? '—');
+  if($('timingGapAhead')) $('timingGapAhead').textContent = gapA || '—';
+  if($('timingGapBehind')) $('timingGapBehind').textContent = gapB || '—';
   // I nomi si riscrivono sempre, anche quando sono vuoti: se restassero quelli
   // di prima indicherebbero l'avversario sbagliato accanto a un distacco nuovo,
   // che e' peggio che non scrivere niente.
-  if($('timingWhoAhead')) $('timingWhoAhead').textContent = descriviRivale(t.numberAhead, t.nameAhead);
-  if($('timingWhoBehind')) $('timingWhoBehind').textContent = descriviRivale(t.numberBehind, t.nameBehind);
+  if($('timingWhoAhead')) $('timingWhoAhead').textContent = cat ? descriviRivale(t.catNumberAhead, t.catNameAhead) : descriviRivale(t.numberAhead, t.nameAhead);
+  if($('timingWhoBehind')) $('timingWhoBehind').textContent = cat ? descriviRivale(t.catNumberBehind, t.catNameBehind) : descriviRivale(t.numberBehind, t.nameBehind);
+  // Sotto la posizione: la categoria e la posizione nell'altra classifica.
+  if($('timingPosSub')){
+    $('timingPosSub').textContent = !t.catName ? ''
+      : cat ? t.catName + ' \u00b7 ass. ' + (t.position ?? '\u2014') + '\u00b0'
+            : t.catName + ' ' + (t.catPosition ?? '\u2014') + '\u00b0';
+  }
 }
 
 function renderQuickGrid(){

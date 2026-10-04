@@ -96,6 +96,8 @@
   /* Il nome e' un appoggio, non un dato da leggere in curva: piccolo, spento e
      troncato, perche' una squadra dal nome lungo non deve allargare la striscia
      e spingere fuori schermo il distacco, che invece serve. */
+  /* Riga piccola sotto la posizione: categoria e posizione nell'altra classifica. */
+  .timing-strip .sub{font-size:11px;color:var(--muted);font-weight:500;margin-top:2px;white-space:nowrap;}
   .timing-strip .who{
     font-size:11px;color:var(--muted);font-weight:500;line-height:1.3;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
