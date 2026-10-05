@@ -43,12 +43,32 @@ function registra(io) {
     // AUTO -> BOX: pressione di uno dei 4 pulsanti rapidi
     socket.on("quickMessage", ({ buttonId, label }) => {
       if (!joinedCode) return;
-      io.to(joinedCode).emit("quickMessageReceived", {
+      const state = getRoomState(joinedCode);
+      // Ogni messaggio ha un identificativo unico, cosi' chi lo riceve due volte
+      // (dal vivo e poi dalla cronologia) lo mostra una volta sola.
+      const msg = {
+        id: Date.now().toString(36) + "-" + (++state.msgSeq),
         buttonId,
-        label,
+        label: String(label == null ? "" : label).slice(0, 200),
         at: Date.now(),
-      });
-      notifyBoxDevices(joinedCode, label);
+      };
+      state.messages.push(msg);
+      if (state.messages.length > 200) state.messages.splice(0, state.messages.length - 200);
+      io.to(joinedCode).emit("quickMessageReceived", msg);
+      notifyBoxDevices(joinedCode, msg.label);
+    });
+
+    // BOX: chiede i messaggi ricevuti (per esempio quando la pagina torna visibile).
+    socket.on("historyRequest", (ack) => {
+      if (!joinedCode || typeof ack !== "function") return;
+      ack({ messages: getRoomState(joinedCode).messages });
+    });
+
+    // BOX: cancella la cronologia per tutti i telefoni della squadra.
+    socket.on("historyClear", () => {
+      if (!joinedCode) return;
+      getRoomState(joinedCode).messages = [];
+      io.to(joinedCode).emit("historyCleared");
     });
 
     // BOX -> AUTO: messaggio a comparsa (testo, colore, durata) + lettura vocale

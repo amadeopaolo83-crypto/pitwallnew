@@ -28,6 +28,10 @@ function getRoomState(code) {
       timing: null, // { position, gapAhead, gapBehind, updatedAt }
       timingView: "assoluta", // cosa mostra l'auto: "assoluta" o "categoria"
       lastFlash: null,
+      // Messaggi dall'auto, i piu' recenti: li riceve chi si ricollega (per esempio
+      // il box dopo che lo schermo e' stato spento). Si perdono con un riavvio del server.
+      messages: [],
+      msgSeq: 0,
       // Collegamento al server classifica (AUBServer). La password non sta
       // qui: lo stato viene mandato a tutti i dispositivi della stanza.
       aub: {
