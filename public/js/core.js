@@ -43,9 +43,59 @@ let fuelSystem = {
 
 let fuelTickInterval = null;
 
-function playAlertBeep(){
+// ---------- audio ----------
+// Il browser fa partire l'audio solo dopo un tocco sulla pagina: si sblocca al primo
+// tocco (qualunque) e poi resta pronto. Dopo aver ricaricato la pagina serve un tocco.
+
+let audioCtx = null;
+
+function getAudio(){
   try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }catch(e){ return null; }
+}
+
+['pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, () => { getAudio(); }, { passive: true }));
+
+// Vibrazione "SOS" (tre corte, tre lunghe, tre corte): si riconosce al volo.
+const SOS_VIBRATION = [300,100,300,100,300,200,600,100,600,100,600,200,300,100,300,100,300];
+
+function loadSirenSettings(){
+  const s = load('pc_siren', null);
+  const vol = s && Number(s.volume) ? Number(s.volume) : 0.8;
+  return { on: s ? s.on !== false : true, volume: Math.min(1, Math.max(0.2, vol)) };
+}
+
+function saveSirenSettings(s){ save('pc_siren', s); }
+
+// Sirena: due toni che si alternano, circa tre secondi, con il volume scelto.
+function playSiren(){
+  const ctx = getAudio();
+  if(!ctx) return;
+  const vol = loadSirenSettings().volume;
+  const durata = 3, passo = 0.35;
+  const t0 = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+  for(let i = 0; i * passo < durata; i++) osc.frequency.setValueAtTime(i % 2 ? 720 : 960, t0 + i * passo);
+  const picco = 0.35 * vol;
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(picco, t0 + 0.05);
+  gain.gain.setValueAtTime(picco, t0 + durata - 0.15);
+  gain.gain.linearRampToValueAtTime(0.0001, t0 + durata);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + durata + 0.05);
+}
+
+// Bip breve (usato quando la sirena e' spenta).
+function playAlertBeep(){
+  const ctx = getAudio();
+  if(!ctx) return;
+  try{
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'square';
@@ -53,6 +103,6 @@ function playAlertBeep(){
     gain.gain.value = 0.15;
     osc.connect(gain).connect(ctx.destination);
     osc.start();
-    setTimeout(() => { osc.stop(); ctx.close(); }, 350);
+    setTimeout(() => { osc.stop(); }, 350);
   }catch(e){}
 }

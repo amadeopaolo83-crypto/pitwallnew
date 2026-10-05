@@ -124,6 +124,7 @@ function applyState(state){
   if(state.aub) renderAubStatus(state.aub);
   if(state.ponte) renderPonteStatus(state.ponte);
   if(state.race) renderRace(state.race);
+  if(role === 'box') mergeHistory(state.messages || []);
   renderQuickGrid();
   renderQbEditor();
   renderFlashEditor();
@@ -133,6 +134,7 @@ function applyState(state){
 
 function registerListeners(){
   socket.on('quickMessageReceived', (m) => addLog(m));
+  socket.on('historyCleared', clearHistoryLocal);
   socket.on('flashMessage', (m) => { if(role==='auto') showFlash(m); });
   socket.on('fuelUpdate', (f) => { renderFuel(f.percent); if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: '+f.percent+'%'; });
   socket.on('autonomyUpdate', (a) => { if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = 'Autonomia stimata: '+(a.minutes==null?'—':a.minutes+' min'); });
@@ -145,6 +147,15 @@ function registerListeners(){
   socket.on('aubStatus', renderAubStatus);
   socket.on('ponteStatus', renderPonteStatus);
 }
+
+// Quando la pagina torna visibile (per esempio dopo lo schermo spento) il telefono
+// puo' aver perso la connessione senza saperlo: la si riprende e si chiedono al server
+// i messaggi arrivati nel frattempo.
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'visible' || !socket) return;
+  if(!socket.connected){ socket.connect(); return; }
+  if(role === 'box') socket.emit('historyRequest', (res) => { if(res && res.messages) mergeHistory(res.messages); });
+});
 
 function resetRole(){
   if(socket) socket.disconnect();

@@ -13,6 +13,8 @@ function enterBoxView(){
   renderQbEditor();
   renderFlashEditor();
   renderFuelSystemUI();
+  renderAlarmCard();
+  applyBoxAwake();
   setupPushNotifications();
 }
 
@@ -77,22 +79,147 @@ function sendFlashPreset(i, btnEl){
   flashConfirm(btnEl);
 }
 
-function addLog(m){
+// ---------- cronologia dei messaggi dall'auto ----------
+// Il server conserva i messaggi della stanza e li manda al box quando si ricollega;
+// il box ne tiene una copia sul telefono, cosi' resta anche ricaricando la pagina.
+// Un messaggio ha un identificativo: arrivando due volte (dal vivo e poi dalla
+// cronologia) compare una volta sola, e solo quello dal vivo suona e vibra.
+
+const HISTORY_MAX = 100;
+
+function loadHistoryLocal(){
+  const h = load('pc_history', null);
+  return h && h.code === code && Array.isArray(h.items) ? h.items : [];
+}
+
+function saveHistoryLocal(items){ save('pc_history', { code: code, items: items }); }
+
+function formatLogTime(at){
+  const d = new Date(at);
+  const ora = d.toLocaleTimeString('it-IT');
+  return d.toDateString() === new Date().toDateString()
+    ? ora
+    : d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) + ' ' + ora;
+}
+
+function renderHistory(items){
   const log = $('log');
   if(!log) return;
-  const div = document.createElement('div');
-  div.className = 'log-item';
-  const time = new Date(m.at).toLocaleTimeString('it-IT');
-  div.innerHTML = `<span>${m.label}</span><span class="t">${time}</span>`;
-  log.prepend(div);
-  while(log.children.length > 5){
-    log.removeChild(log.lastElementChild);
-  }
-  if(navigator.vibrate) navigator.vibrate([40,40,40]);
-  playAlertBeep();
+  log.innerHTML = '';
+  items.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    const testo = document.createElement('span');
+    testo.textContent = m.label;          // testo semplice: niente HTML dal messaggio
+    const t = document.createElement('span');
+    t.className = 't';
+    t.textContent = formatLogTime(m.at);
+    div.appendChild(testo);
+    div.appendChild(t);
+    log.prepend(div);
+  });
+}
+
+/** Aggiunge i messaggi nuovi alla cronologia; `dalVivo` fa suonare e vibrare. */
+function mergeHistory(nuovi, dalVivo){
+  const attuali = loadHistoryLocal();
+  const noti = new Set(attuali.map(m => m.id));
+  const aggiunti = [];
+  (nuovi || []).forEach(m => {
+    if(!m) return;
+    const id = m.id || (m.at + ':' + m.label);
+    if(noti.has(id)) return;
+    noti.add(id);
+    aggiunti.push({ id: id, label: String(m.label == null ? '' : m.label), at: Number(m.at) || Date.now() });
+  });
+  if(!aggiunti.length){ renderHistory(attuali); return false; }
+  const tutti = attuali.concat(aggiunti).sort((a, b) => a.at - b.at).slice(-HISTORY_MAX);
+  saveHistoryLocal(tutti);
+  renderHistory(tutti);
+  if(dalVivo) avvisaMessaggio();
+  return true;
+}
+
+function addLog(m){ mergeHistory([m], true); }
+
+function clearHistoryLocal(){
+  saveHistoryLocal([]);
+  renderHistory([]);
 }
 
 function clearLog(){
-  const log = $('log');
-  if(log) log.innerHTML = '';
+  clearHistoryLocal();
+  if(socket && socket.connected) socket.emit('historyClear');
 }
+
+// ---------- avviso, sirena e schermo acceso ----------
+
+// Un messaggio dal vivo: vibrazione SOS e sirena (o un bip, se la sirena e' spenta).
+function avvisaMessaggio(){
+  if(navigator.vibrate) navigator.vibrate(SOS_VIBRATION);
+  if(loadSirenSettings().on) playSiren(); else playAlertBeep();
+}
+
+function renderAlarmCard(){
+  const s = loadSirenSettings();
+  if($('sirenToggle')) $('sirenToggle').checked = s.on;
+  if($('sirenVolume')) $('sirenVolume').value = Math.round(s.volume * 100);
+  if($('awakeToggle')) $('awakeToggle').checked = localStorage.getItem('pc_box_awake') === '1';
+}
+
+function setSirenOn(on){
+  const s = loadSirenSettings();
+  s.on = !!on;
+  saveSirenSettings(s);
+}
+
+function setSirenVolume(v){
+  const s = loadSirenSettings();
+  s.volume = Math.min(1, Math.max(0.2, Number(v) / 100));
+  saveSirenSettings(s);
+}
+
+// Il tocco sul pulsante serve anche a sbloccare l'audio del browser.
+function testSiren(){
+  if(navigator.vibrate) navigator.vibrate(SOS_VIBRATION);
+  playSiren();
+}
+
+// Schermo sempre acceso sul box: la pagina resta in primo piano e la connessione non
+// cade, cosi' la sirena suona sempre. Si perde se la pagina va in secondo piano e si
+// riprende al ritorno. Consuma batteria.
+let boxWakeLock = null;
+
+function setAwakeStatus(testo){
+  if($('awakeStatus')) $('awakeStatus').textContent = testo;
+}
+
+async function applyBoxAwake(){
+  const on = localStorage.getItem('pc_box_awake') === '1';
+  if(!on){
+    try{ if(boxWakeLock) await boxWakeLock.release(); }catch(e){}
+    boxWakeLock = null;
+    setAwakeStatus('Spento: lo schermo si spegne come al solito.');
+    return;
+  }
+  if(!navigator.wakeLock){
+    setAwakeStatus('Questo telefono non lo permette.');
+    return;
+  }
+  try{
+    boxWakeLock = await navigator.wakeLock.request('screen');
+    boxWakeLock.addEventListener('release', () => { boxWakeLock = null; });
+    setAwakeStatus("Attivo: lo schermo resta acceso finch\u00e9 l'app \u00e8 aperta in primo piano.");
+  }catch(e){
+    setAwakeStatus('Non riesco ad attivarlo adesso: riprova toccando di nuovo.');
+  }
+}
+
+function setBoxAwake(on){
+  localStorage.setItem('pc_box_awake', on ? '1' : '0');
+  applyBoxAwake();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && role === 'box' && localStorage.getItem('pc_box_awake') === '1' && !boxWakeLock) applyBoxAwake();
+});
