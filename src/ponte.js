@@ -14,7 +14,7 @@
 //
 // Formato della classifica che arriva dal ponte (campi usati):
 //   sessione: { tipo: "qualifica" | "gara", nome, categoria, bandiera }
-//   piloti:   [{ pos, numero, nome, classe, giri, migliorGiro, tempoTotale, intervallo, intervalloTesto }]
+//   piloti:   [{ pos, numero, nome, classe, giri, giriRitardo, migliorGiro, tempoTotale, intervallo }]
 //   con i tempi in secondi.
 
 const { getRoomState } = require("./rooms");
@@ -72,7 +72,9 @@ const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
  *   1. stesso numero di giri: differenza dei tempi totali (esatta);
  *   2. altrimenti la somma degli intervalli fra i due (come li calcola il sito,
  *      gestisce anche chi ha appena tagliato il traguardo e chi no);
- *   3. se un intervallo non e' un tempo (doppiati): i giri di differenza.
+ *   3. se un intervallo non e' un tempo (doppiati): i giri di differenza, letti
+ *      dalla scritta "N giri" del sito (ritardo dal primo di ciascuno) e, se
+ *      manca, dai giri completati.
  */
 function distanzaTra(sessione, validi, iDavanti, iDietro) {
   const a = validi[iDavanti];
@@ -94,11 +96,12 @@ function distanzaTra(sessione, validi, iDavanti, iDietro) {
     somma += t;
   }
   if (completa) return { sec: somma };
-  if (a.giri != null && b.giri != null && a.giri - b.giri > 0) {
-    const g = a.giri - b.giri;
-    return { testo: `${g} ${g === 1 ? "giro" : "giri"}` };
-  }
-  return null;
+  // Il sito dice a ognuno quanti giri ha dal primo ("2 giri"): la distanza fra due
+  // piloti e' la differenza fra i loro ritardi, non il ritardo di uno dei due.
+  let g = 0;
+  if (num(a.giriRitardo) !== null && num(b.giriRitardo) !== null) g = b.giriRitardo - a.giriRitardo;
+  if (g <= 0 && a.giri != null && b.giri != null) g = a.giri - b.giri;
+  return g > 0 ? { testo: `${g} ${g === 1 ? "giro" : "giri"}` } : null;
 }
 
 const comeDavanti = (d) => (!d ? "" : d.testo ? d.testo : "+" + formatSeconds(d.sec));
@@ -134,8 +137,15 @@ function computeTiming(sessione, piloti, numero) {
     gapAhead = davanti ? comeDavanti(distanzaTra(sessione, validi, i - 1, i)) : "";
     gapBehind = dietro ? comeDietro(distanzaTra(sessione, validi, i, i + 1)) : "";
   } else {
-    gapAhead = davanti ? formatGap(mio.intervallo, mio.intervalloTesto, "+") : "";
-    gapBehind = dietro ? formatGap(dietro.intervallo, dietro.intervalloTesto, "-") : "";
+    // Se il sito da' un tempo si usa quello (l'intervallo che mostra). Se invece
+    // scrive "N giri", quello e' il ritardo dal primo: si calcola la distanza vera
+    // fra i due piloti.
+    gapAhead = !davanti ? ""
+      : num(mio.intervallo) !== null ? "+" + formatSeconds(mio.intervallo)
+      : comeDavanti(distanzaTra(sessione, validi, i - 1, i));
+    gapBehind = !dietro ? ""
+      : num(dietro.intervallo) !== null ? "-" + formatSeconds(dietro.intervallo)
+      : comeDietro(distanzaTra(sessione, validi, i, i + 1));
   }
 
   const avanti = schedaRivale(davanti);
