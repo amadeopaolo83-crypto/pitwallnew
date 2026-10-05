@@ -14,7 +14,7 @@ self.addEventListener('push', (event) => {
       body: data.body,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      vibrate: [200, 100, 200, 100, 200],
+      vibrate: [300, 100, 300, 100, 300, 200, 600, 100, 600, 100, 600, 200, 300, 100, 300, 100, 300],
       tag: 'pitcomm-msg',
       renotify: true,
       requireInteraction: true,
