@@ -7,7 +7,6 @@
 let lastTimerState = null;
 let prevRaceRemainingForPopup = null;
 let popupActiveUntil = 0;
-let finishHoldTimer = null;
 let prevTimerPhase = null;
 
 function currentRemainingClient(baseRemaining, updatedAt, running, speed){
@@ -38,8 +37,9 @@ function applyTimerState(t){
 function flashRacePartita(){
   const flash = document.createElement('div');
   flash.className = 'race-start-flash';
+  flash.innerHTML = '<span>VIA!</span>';
   document.body.appendChild(flash);
-  setTimeout(() => flash.remove(), 900);
+  setTimeout(() => flash.remove(), 1400);
 }
 
 // ---------- BOX: card di controllo ----------
@@ -49,8 +49,12 @@ function renderTimerBox(t){
     t.phase === 'start' ? 'Fase: conto alla rovescia di partenza' :
     t.phase === 'race' ? 'Fase: gara in corso' : 'Fase: arrivo';
 
-  const sInput = $('timerStartInput');
-  if(sInput && document.activeElement !== sInput) sInput.value = Math.round(t.startSeconds / 60);
+  const sM = $('timerStartM'), sS = $('timerStartS');
+  if(document.activeElement !== sM && document.activeElement !== sS){
+    const tot = Math.round(t.startSeconds);
+    if(sM) sM.value = Math.floor(tot / 60);
+    if(sS) sS.value = tot % 60;
+  }
 
   const rH = $('timerRaceH'), rM = $('timerRaceM'), rS = $('timerRaceS');
   const nessunoInFocus = document.activeElement !== rH && document.activeElement !== rM && document.activeElement !== rS;
@@ -76,9 +80,11 @@ function renderTimerBox(t){
 }
 
 function timerStartSet(){
-  const minuti = Number($('timerStartInput').value) || 0;
-  if(minuti <= 0) return;
-  socket.emit('timerStartSet', { seconds: Math.round(minuti * 60) });
+  const m = Number($('timerStartM').value) || 0;
+  const s = Number($('timerStartS').value) || 0;
+  const totale = Math.round(m * 60 + s);
+  if(totale <= 0) return;
+  socket.emit('timerStartSet', { seconds: totale });
 }
 function timerStartControl(action){ socket.emit('timerStartControl', { action }); }
 
@@ -127,20 +133,10 @@ function renderFinishScreen(t){
   if($('finishDriverLabel')) $('finishDriverLabel').textContent = t.finishDriverName || '';
 }
 
-// Tenuta di 10 secondi sulla X della schermata Finish (sull'auto), per
-// evitare che si chiuda per un tocco involontario del pilota.
-function finishHoldStart(ev){
-  if(ev && ev.preventDefault) ev.preventDefault();
-  const fill = $('finishXFill');
-  if(fill){ fill.style.transition = 'width 10s linear'; fill.style.width = '100%'; }
-  finishHoldTimer = setTimeout(() => {
-    socket.emit('timerDebugJump', { preset: 'reset' });
-  }, 10000);
-}
-function finishHoldCancel(){
-  clearTimeout(finishHoldTimer);
-  const fill = $('finishXFill');
-  if(fill){ fill.style.transition = 'width .2s ease'; fill.style.width = '0%'; }
+// X sulla schermata Finish (sull'auto): un tocco la chiude e rimette il
+// timer pronto per la prossima partenza.
+function finishClose(){
+  socket.emit('timerDebugJump', { preset: 'reset' });
 }
 
 // ---------- popup periodici: ogni ora intera trascorsa, ogni 15' nell'ultima ora ----------
