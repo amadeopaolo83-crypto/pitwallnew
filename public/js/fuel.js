@@ -34,11 +34,31 @@ function renderFuelSystemUI(){
   if($('autonomyLiveAuto')) $('autonomyLiveAuto').textContent = autonomyTxt;
 }
 
+// La velocita' di test del timer gara (x1/x60/x300) acceleta anche il
+// consumo carburante, cosi' durante un test si vede scendere in pochi
+// secondi invece che nelle ore vere della gara.
+function fuelTestSpeed(){
+  return (typeof lastTimerState !== 'undefined' && lastTimerState && lastTimerState.speed) ? lastTimerState.speed : 1;
+}
+
 function computeLiveLiters(){
   const fs = fuelSystem;
   if(!fs.onTrack || !fs.consumptionRatePerHour || !fs.sessionStartAt) return fs.currentLiters;
-  const elapsedHours = (Date.now() - fs.sessionStartAt) / 3600000;
+  const elapsedHours = ((nowSync() - fs.sessionStartAt) / 3600000) * fuelTestSpeed();
   return Math.max(0, fs.sessionStartLiters - elapsedHours * fs.consumptionRatePerHour);
+}
+
+// Quando la velocita' di test cambia (timer.js) si "congela" il consumo
+// fatto finora con la velocita' precedente, poi si riparte da zero con la
+// nuova: altrimenti il salto di velocita' farebbe saltare anche i litri.
+function rebaseFuelSpeed(oldSpeed){
+  const fs = fuelSystem;
+  if(!fs.onTrack || !fs.sessionStartAt) return;
+  const elapsedHours = ((nowSync() - fs.sessionStartAt) / 3600000) * (oldSpeed || 1);
+  const liters = Math.max(0, fs.sessionStartLiters - elapsedHours * (fs.consumptionRatePerHour || 0));
+  fs.currentLiters = liters;
+  fs.sessionStartAt = nowSync();
+  fs.sessionStartLiters = liters;
 }
 
 function syncFuelSystem(){
@@ -125,7 +145,7 @@ function setOnTrack(goingOnTrack){
   if(goingOnTrack){
     fuelSystem.currentLiters = computeLiveLiters();
     fuelSystem.onTrack = true;
-    fuelSystem.sessionStartAt = Date.now();
+    fuelSystem.sessionStartAt = nowSync();
     fuelSystem.sessionStartLiters = fuelSystem.currentLiters;
   } else {
     fuelSystem.currentLiters = computeLiveLiters();

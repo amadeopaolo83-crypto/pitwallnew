@@ -44,6 +44,7 @@ function connect(serverUrl, joinTimeout){
         return;
       }
       setLandingStatus('');
+      if(res.serverNow) clockOffset = res.serverNow - Date.now();
       applyState(res.state);
       $('landing').hidden = true;
       if(role === 'auto') enterAutoView(); else enterBoxView();

@@ -9,6 +9,14 @@ const $ = id => document.getElementById(id);
 
 let socket, code, role;
 
+// Differenza tra l'orologio del server e quello di questo telefono: i timer
+// sono calcolati sul tempo del server (Date.now() da solo non basta se
+// l'orologio del telefono e' sbagliato o va a un'ora diversa). Si aggiorna
+// a ogni (ri)collegamento; nowSync() e' quello che il resto del codice usa
+// al posto di Date.now() per tutto cio' che riguarda i timer.
+let clockOffset = 0;
+function nowSync(){ return Date.now() + clockOffset; }
+
 function load(key, fallback){
   try{ const v = JSON.parse(localStorage.getItem(key)); return v || fallback; }catch(e){ return fallback; }
 }

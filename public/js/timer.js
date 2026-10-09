@@ -11,7 +11,7 @@ let prevTimerPhase = null;
 
 function currentRemainingClient(baseRemaining, updatedAt, running, speed){
   if(!running) return baseRemaining;
-  const elapsed = ((Date.now() - updatedAt) / 1000) * (speed || 1);
+  const elapsed = ((nowSync() - updatedAt) / 1000) * (speed || 1);
   return Math.max(0, baseRemaining - elapsed);
 }
 
@@ -24,8 +24,13 @@ function fmtHMS(totalSeconds){
 // Chiamata da connection.js quando arriva lo stato (al join e a ogni timerUpdate).
 function applyTimerState(t){
   if(!t) return;
+  const oldSpeed = lastTimerState ? lastTimerState.speed : 1;
   const partitaOra = prevTimerPhase === 'start' && t.phase === 'race';
   prevTimerPhase = t.phase;
+  // Il carburante segue la stessa velocita' di test del timer: se e' appena
+  // cambiata, si congela il consumo fatto con quella vecchia prima di
+  // passare alla nuova (altrimenti i litri farebbero un salto).
+  if(t.speed !== oldSpeed && typeof rebaseFuelSpeed === 'function') rebaseFuelSpeed(oldSpeed);
   lastTimerState = t;
   if(role === 'box') renderTimerBox(t);
   if(role === 'auto') renderTimerAuto(t);
@@ -65,7 +70,10 @@ function renderTimerBox(t){
     if(rS) rS.value = tot % 60;
   }
 
-  if($('timerSpeedLabel')) $('timerSpeedLabel').textContent = 'Velocità test: x' + t.speed;
+  if($('timerSpeedLabel')){
+    $('timerSpeedLabel').textContent = 'Velocità test: x' + t.speed + (t.speed !== 1 ? ' — ACCELERATO' : '');
+    $('timerSpeedLabel').style.color = t.speed !== 1 ? 'var(--red)' : '';
+  }
   [['timerSpeed1', 1], ['timerSpeed60', 60], ['timerSpeed300', 300]].forEach(([id, val]) => {
     const el = $(id);
     if(el) el.classList.toggle('active', t.speed === val);
