@@ -6,197 +6,16 @@
 <title>PitComm</title>
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#0B0D0F" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="PitComm" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<style>
-  :root{
-    --bg:#0B0D0F;
-    --panel:#14171A;
-    --panel-2:#1C2024;
-    --line:#262B30;
-    --text:#E9EDEF;
-    --muted:#8A9199;
-    --yellow:#F5C518;
-    --red:#E63946;
-    --green:#3ECF6E;
-    --cyan:#2FB6C4;
-  }
-  *{box-sizing:border-box;}
-  html,body{
-    margin:0;height:100%;background:var(--bg);color:var(--text);
-    font-family:'Inter',sans-serif;
-    -webkit-user-select:none;user-select:none;
-    overscroll-behavior:none;
-  }
-  h1,h2,h3,.display{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.04em;}
-  .mono{font-family:'JetBrains Mono',monospace;}
-  [hidden]{display:none!important;}
-  button{font-family:inherit;cursor:pointer;}
-  input,select{font-family:inherit;}
-
-  /* ---------- LANDING ---------- */
-  #landing{
-    min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:24px;gap:28px;text-align:center;
-    background:
-      radial-gradient(circle at 50% -10%, #1a1e22 0%, var(--bg) 60%);
-  }
-  .brand{display:flex;align-items:baseline;gap:10px;}
-  .brand .mark{width:14px;height:14px;background:var(--yellow);border-radius:2px;box-shadow:0 0 18px var(--yellow);}
-  .brand h1{font-size:28px;margin:0;color:var(--text);}
-  .brand span{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;}
-  #landing label{display:block;font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;}
-  #teamCode{
-    width:260px;max-width:70vw;text-align:center;font-family:'JetBrains Mono',monospace;font-size:26px;
-    letter-spacing:.2em;background:var(--panel);border:1px solid var(--line);color:var(--yellow);
-    border-radius:10px;padding:14px 10px;text-transform:uppercase;
-  }
-  #teamCode:focus{outline:none;border-color:var(--yellow);}
-  .role-row{display:flex;gap:16px;}
-  .role-btn{
-    width:150px;padding:22px 10px;border-radius:14px;border:1px solid var(--line);
-    background:var(--panel);color:var(--text);font-family:'Oswald',sans-serif;font-size:20px;
-    letter-spacing:.05em;text-transform:uppercase;transition:.15s;
-  }
-  .role-btn:active{transform:scale(.96);}
-  .role-btn.box{border-color:var(--cyan);}
-  .role-btn.auto{border-color:var(--yellow);}
-  .role-btn small{display:block;font-family:'Inter',sans-serif;color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;margin-top:4px;}
-  details{color:var(--muted);font-size:12px;}
-  details input{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 8px;width:220px;}
-
-  #changeRoleBtn{
-    position:fixed;top:10px;left:10px;z-index:70;
-    background:#0B0D0F;color:var(--yellow);border:2px solid var(--yellow);
-    border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;
-    font-family:'Inter',sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.5);
-  }
-  #boxView #changeRoleBtn{ position:static;display:inline-block;margin-bottom:14px; }
-  #autoView{
-    position:fixed;inset:0;display:flex;flex-direction:column;
-    background:var(--bg);
-  }
-  body.night #autoView{ background:#000; }
-  body.night #autoView .fuel-shell, body.night .quick-btn{ filter:brightness(.8); }
-
-  .fuel-track{height:18px;border-radius:5px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden;}
-  .fuel-fill{height:100%;transition:width .6s ease, background-color .6s ease;}
-
-  /* ---------- RIGA SUPERIORE (si scambia: partenza / distacchi / popup) ---------- */
-  #topRow{
-    flex:0 0 38%;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    border-bottom:1px solid var(--line);gap:6px;position:relative;transition:background-color .2s;
-  }
-  #topRow.mode-distacchi{flex-direction:row;justify-content:center;gap:clamp(30px,8vw,120px);}
-  #topRow .t-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase;}
-  #topRow .t-big{font-family:'JetBrains Mono',monospace;font-size:clamp(46px,9vw,80px);font-weight:700;line-height:1;color:var(--red);text-shadow:0 0 28px rgba(230,57,70,.55);}
-  #topRow .t-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--yellow);letter-spacing:.08em;}
-  #topRow.flash-yellow .t-big{color:var(--yellow);text-shadow:0 0 28px rgba(245,197,24,.55);}
-  #topRow.flash-red .t-big{color:var(--red);text-shadow:0 0 28px rgba(230,57,70,.55);}
-  #topRow.phase-green{background:var(--green);}
-  #topRow.phase-green .t-label,#topRow.phase-green .t-sub{color:#0B0D0F;opacity:.75;}
-  #topRow.phase-green .t-big{color:#0B0D0F;text-shadow:none;}
-  .gap-col{text-align:center;}
-  .gap-col .lbl{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.14em;}
-  .gap-col .val{font-family:'JetBrains Mono',monospace;font-size:clamp(34px,7.5vw,52px);font-weight:700;color:var(--yellow);line-height:1;}
-  .gap-col.pos .val{font-family:'Oswald',sans-serif;color:var(--text);text-transform:uppercase;}
-
-  /* ---------- RIGA CENTRALE: carburante + pulsante ---------- */
-  #centerRow{flex:0 0 32%;display:flex;align-items:stretch;gap:10px;padding:12px 18px;box-sizing:border-box;border-bottom:1px solid var(--line);}
-  #fuelBlock{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding-right:6px;min-width:0;}
-  .fuel-label{display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:.08em;}
-  .fuel-label span:last-child{font-size:16px;color:var(--text);font-weight:700;}
-  #autonomyLabel{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);}
-  #centerQuickBtn{
-    flex:0 0 clamp(130px,30vw,282px);box-sizing:border-box;border-radius:16px;border:2px solid transparent;color:#0B0D0F;
-    font-family:'Oswald',sans-serif;font-size:clamp(15px,3.2vw,19px);text-transform:uppercase;
-    display:flex;align-items:center;justify-content:center;text-align:center;padding:0 10px;
-    transition:transform .08s, box-shadow .2s;
-  }
-
-  /* ---------- RIGA INFERIORE: 3 pulsanti ---------- */
-  #bottomRow{flex:1;display:flex;gap:10px;padding:12px 18px;box-sizing:border-box;}
-  .quick-btn{
-    flex:1;border-radius:14px;border:2px solid transparent;color:#0B0D0F;
-    font-family:'Oswald',sans-serif;font-size:clamp(17px,3.4vw,22px);text-transform:uppercase;
-    display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;
-    transition:transform .08s, box-shadow .2s;
-  }
-  .quick-btn:active,#centerQuickBtn:active{transform:scale(.97);}
-  .quick-btn.flashing,#centerQuickBtn.flashing{box-shadow:0 0 0 6px #fff inset, 0 0 40px #fff; animation:pulseSend .4s ease;}
-  @keyframes pulseSend{0%{filter:brightness(1.6)}100%{filter:brightness(1)}}
-
-  /* ---------- FINISH ---------- */
-  #finishOverlay{
-    position:fixed;inset:0;z-index:55;display:flex;flex-direction:column;
-    color:var(--text);overflow:hidden;background:#0B0D0F;
-  }
-  #finishOverlay .stripe{height:14px;width:100%;background-image:repeating-linear-gradient(45deg,#E9EDEF 0 10px,#0B0D0F 10px 20px);opacity:.85;flex:none;}
-  #finishOverlay .finish-body{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:0 6vw;}
-  #finishPhotoImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;}
-  #finishOverlay.bg-photo .finish-body{background:transparent;}
-  #finishOverlay.bg-photo .finish-body::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg, rgba(11,13,15,.1) 0%, rgba(11,13,15,.08) 45%, rgba(11,13,15,.8) 78%, rgba(11,13,15,.93) 100%);}
-  #finishOverlay.bg-dark .finish-body{background:radial-gradient(ellipse at 50% 38%, #2a2108 0%, #0B0D0F 62%);}
-  #finishOverlay.bg-dark #finishPhotoImg{display:none;}
-  #finishOverlay.bg-photo .confetti,#finishOverlay.bg-photo .trophy{display:none;}
-  .confetti{position:absolute;border-radius:2px;}
-  .trophy{position:relative;filter:drop-shadow(0 0 14px rgba(245,197,24,.6));}
-  .finish-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:2px;}
-  .finish-label{font-family:'JetBrains Mono',monospace;font-size:clamp(11px,2vw,14px);letter-spacing:.3em;color:var(--yellow);text-shadow:0 2px 8px rgba(0,0,0,.6);}
-  .finish-pos{font-family:'Oswald',sans-serif;font-size:clamp(70px,16vw,128px);font-weight:700;line-height:.9;color:var(--yellow);text-shadow:0 4px 30px rgba(0,0,0,.6),0 0 40px rgba(245,197,24,.4);text-transform:uppercase;}
-  .finish-driver{font-family:'Oswald',sans-serif;font-size:clamp(20px,4.2vw,32px);font-weight:700;color:var(--text);text-shadow:0 2px 10px rgba(0,0,0,.7);text-transform:uppercase;}
-  #finishDismiss{position:absolute;top:20px;right:20px;z-index:3;display:flex;flex-direction:column;align-items:center;gap:6px;}
-  #finishDismissRing{
-    width:56px;height:56px;border-radius:50%;border:3px solid var(--red);display:flex;align-items:center;justify-content:center;
-    background:rgba(11,13,15,.5);position:relative;overflow:hidden;
-  }
-  #finishDismissFill{position:absolute;left:0;right:0;bottom:0;height:0%;background:rgba(230,57,70,.55);transition:none;}
-  #finishDismiss .mono{font-size:9px;color:var(--text);text-align:center;line-height:1.25;text-shadow:0 1px 4px rgba(0,0,0,.8);}
-
-  /* ---------- POPUP RIEPILOGO GARA (livello 1 periodico) ---------- */
-  #topRow.mode-race-glance .t-big{color:var(--yellow);text-shadow:0 0 28px rgba(245,197,24,.5);}
-
-  #flashOverlay{
-    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-    padding:6vw;text-align:center;z-index:50;
-  }
-  #flashOverlay .txt{font-family:'Oswald',sans-serif;font-size:clamp(32px,8vw,90px);color:#0B0D0F;text-transform:uppercase;line-height:1.05;}
-
-  #rotateHint{
-    position:fixed;inset:0;background:var(--bg);color:var(--text);display:flex;
-    flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:60;
-  }
-
-  /* ---------- BOX VIEW ---------- */
-  #boxView{min-height:100dvh;padding:18px 16px 60px;max-width:640px;margin:0 auto;}
-  .box-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
-  .box-header h2{margin:0;font-size:20px;}
-  .code-pill{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--yellow);border:1px solid var(--line);border-radius:20px;padding:4px 12px;}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
-  .card h3{margin:0 0 12px;font-size:14px;color:var(--muted);}
-  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
-  .row:last-child{margin-bottom:0;}
-  .toggle{position:relative;width:50px;height:28px;background:var(--panel-2);border-radius:20px;border:1px solid var(--line);}
-  .toggle input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;}
-  .toggle .knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:.2s;}
-  .toggle input:checked + .knob{left:24px;background:var(--yellow);}
-  input[type=range]{flex:1;accent-color:var(--yellow);}
-  input[type=number], input[type=text]{
-    background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;width:100%;
-  }
-  input[type=color]{width:38px;height:34px;border:none;border-radius:8px;background:none;padding:0;}
-  .qb-row{display:grid;grid-template-columns:1fr 44px;gap:8px;margin-bottom:8px;align-items:center;}
-  .flash-row{display:grid;grid-template-columns:1fr 44px 60px auto;gap:8px;margin-bottom:8px;align-items:center;}
-  .flash-row input[type=number]{width:60px;}
-  .btn{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 14px;font-size:13px;transition:background .15s,color .15s,border-color .15s;}
-  .btn.primary{background:var(--yellow);color:#0B0D0F;border-color:var(--yellow);font-weight:600;}
-  .btn.small{padding:8px 10px;font-size:12px;}
-  .btn.sent-confirm{background:var(--green)!important;color:#0B0D0F!important;border-color:var(--green)!important;}
-  #log{max-height:200px;overflow-y:auto;display:flex;flex-direction:column-reverse;gap:6px;}
-  .log-item{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--panel-2);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;}
-  .log-item .t{color:var(--muted);}
-</style>
+<link rel="stylesheet" href="css/style.css?v=5" />
 </head>
 <body>
 
@@ -212,62 +31,42 @@
     <button class="role-btn auto" id="btnAuto" onclick="joinAs('auto')">Auto<small>schermo in pista</small></button>
   </div>
   <div id="landingStatus" style="min-height:20px;font-size:13px;color:var(--muted);"></div>
+  <button class="install-btn" id="btnInstall" onclick="installApp()" hidden>⬇ Installa l'app sul telefono</button>
+  <div class="install-help" id="installHelp" hidden></div>
   <details>
     <summary>Server</summary>
-    <input id="serverUrl" placeholder="https://tuo-server.com" value="https://pitwallaggiornata2.onrender.com" />
+    <input id="serverUrl" placeholder="vuoto = questo stesso indirizzo" value="" />
   </details>
 </div>
 
 <!-- ============ AUTO VIEW ============ -->
 <div id="autoView" hidden>
   <button id="changeRoleBtn" onclick="resetRole()">◄ cambia</button>
-
-  <div id="topRow"></div>
-
-  <div id="centerRow">
-    <div id="fuelBlock">
-      <div class="fuel-label"><span>CARBURANTE</span><span id="fuelPct">100%</span></div>
-      <div class="fuel-track"><div class="fuel-fill" id="fuelFill" style="width:100%;background:#3ECF6E;"></div></div>
-      <div id="autonomyLabel">Autonomia stimata: —</div>
+  <div class="timing-strip">
+    <div class="side" style="text-align:left;">
+      <div class="lbl">DAVANTI</div>
+      <span class="gap" id="timingGapAhead">—</span>
+      <div class="who" id="timingWhoAhead"></div>
     </div>
-    <button id="centerQuickBtn"></button>
+    <div style="text-align:center;">
+      <div class="lbl">POSIZIONE</div>
+      <span id="timingPos" style="font-size:20px;font-weight:700;color:var(--text);">—</span>
+      <div class="sub" id="timingPosSub"></div>
+    </div>
+    <div class="side" style="text-align:right;">
+      <div class="lbl">DIETRO</div>
+      <span class="gap" id="timingGapBehind">—</span>
+      <div class="who" id="timingWhoBehind"></div>
+    </div>
   </div>
-
-  <div id="bottomRow"></div>
+  <div class="fuel-shell">
+    <div class="fuel-label"><span>CARBURANTE</span><span id="fuelPct">100%</span></div>
+    <div class="fuel-track"><div class="fuel-fill" id="fuelFill" style="width:100%;background:#3ECF6E;"></div></div>
+  </div>
+  <div class="quick-grid" id="quickGrid"></div>
 </div>
 
 <div id="flashOverlay" hidden><div class="txt" id="flashText"></div></div>
-
-<!-- ============ FINISH ============ -->
-<div id="finishOverlay" class="bg-photo" hidden>
-  <div class="stripe"></div>
-  <div class="finish-body">
-    <img id="finishPhotoImg" src="finish-photo.jpg" alt="" onerror="this.style.display='none'">
-    <div class="confetti" style="width:10px;height:10px;background:#F5C518;top:46px;left:12%;transform:rotate(18deg)"></div>
-    <div class="confetti" style="width:8px;height:8px;border-radius:50%;background:#E63946;top:80px;left:22%"></div>
-    <div class="confetti" style="width:9px;height:9px;background:#3FA9F5;top:58px;right:18%;transform:rotate(-22deg)"></div>
-    <div class="confetti" style="width:7px;height:7px;border-radius:50%;background:#7ED321;top:110px;right:25%"></div>
-    <div class="confetti" style="width:10px;height:10px;background:#F5C518;bottom:70px;left:18%;transform:rotate(-10deg)"></div>
-    <div class="confetti" style="width:8px;height:8px;border-radius:50%;background:#3FA9F5;bottom:90px;right:16%"></div>
-    <div class="confetti" style="width:9px;height:9px;background:#E63946;bottom:50px;right:28%;transform:rotate(30deg)"></div>
-    <div class="finish-inner">
-      <svg class="trophy" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/>
-        <path d="M7 5H4a2 2 0 0 0 0 4h1M17 5h3a2 2 0 0 1 0 4h-1"/>
-      </svg>
-      <div class="finish-label mono">GARA TERMINATA</div>
-      <div class="finish-pos" id="finishPosEl">P1</div>
-      <div class="finish-driver" id="finishDriverEl">Complimenti!</div>
-    </div>
-    <div id="finishDismiss">
-      <div id="finishDismissRing"><div id="finishDismissFill"></div>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E63946" stroke-width="3" stroke-linecap="round" style="position:relative;z-index:2;"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
-      </div>
-      <div class="mono">tieni premuto<br>10s per uscire</div>
-    </div>
-  </div>
-  <div class="stripe"></div>
-</div>
 
 <div id="rotateHint" hidden>
   <div class="display" style="font-size:22px;">Ruota il telefono in orizzontale</div>
@@ -282,17 +81,22 @@
   </div>
   <button id="changeRoleBtn" onclick="resetRole()">◄ cambia ruolo / codice</button>
   <div class="card">
-    <h3>Notifiche</h3>
-    <span class="mono" id="pushStatus" style="font-size:12px;color:var(--muted);">In attivazione…</span>
+    <h3>Messaggi ricevuti dall'auto</h3>
+    <div id="log"></div>
+    <button class="btn small" style="margin-top:10px;" onclick="clearLog()">Cancella cronologia</button>
   </div>
 
+  <!-- Gara: finche' e' avviata il server si tiene sveglio da solo -->
   <div class="card">
-    <h3>Schermo auto</h3>
-    <div class="row"><span>Modalità notte</span>
-      <label class="toggle"><input type="checkbox" id="dayModeToggle" onchange="sendDayMode()"><span class="knob"></span></label>
+    <h3>Gara</h3>
+    <div class="row"><span class="mono" id="raceStatusLabel" style="font-size:12px;">Gara ferma · il server può spegnersi se nessuno lo usa</span></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn state-btn green" id="btnRaceStart" onclick="startRace()">Avvio gara</button>
+      <button class="btn state-btn red" id="btnRaceStop" onclick="stopRace()">Fine gara</button>
     </div>
   </div>
 
+  <!-- 1. Carburante e stato in pista / ai box -->
   <div class="card">
     <h3>Carburante &amp; autonomia</h3>
     <div class="row"><span class="mono" id="fuelValLabel">Livello: 100%</span></div>
@@ -303,11 +107,22 @@
       <span class="mono" id="trackStatusLabel">Stato: ai box</span>
     </div>
     <div class="row" style="flex-wrap:wrap;gap:8px;">
-      <button class="btn primary" onclick="setOnTrack(true)">In pista</button>
-      <button class="btn" onclick="setOnTrack(false)">Ai box</button>
+      <button class="btn state-btn green" id="btnOnTrack" onclick="setOnTrack(true)">In pista</button>
+      <button class="btn state-btn orange" id="btnAtBox" onclick="setOnTrack(false)">Ai box</button>
     </div>
+  </div>
 
-    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+  <!-- 2. Messaggi a schermo intero -->
+  <div class="card">
+    <h3>Messaggi a schermo intero</h3>
+    <div id="flashEditor"></div>
+    <button class="btn small" onclick="addFlashPreset()">+ aggiungi preset</button>
+  </div>
+
+  <!-- 3. Capienza, livello di partenza, rifornimento -->
+  <div class="card">
+    <h3>Serbatoio</h3>
+    <div class="row">
       <span class="mono" style="font-size:12px;">Capienza serbatoio (L)</span>
     </div>
     <div class="row"><input type="number" id="tankCapacityInput" placeholder="es. 100"></div>
@@ -324,8 +139,19 @@
     </div>
     <div class="row"><input type="number" id="refuelLitersInput" placeholder="Litri appena riforniti"></div>
     <div class="row"><button class="btn small" style="width:100%" onclick="doRefuel()">Rifornisci</button></div>
+  </div>
 
-    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+  <!-- 4. Schermo auto -->
+  <div class="card">
+    <h3>Schermo auto</h3>
+    <div class="row"><span>Modalità notte</span>
+      <label class="toggle"><input type="checkbox" id="dayModeToggle" onchange="sendDayMode()"><span class="knob"></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Consumo</h3>
+    <div class="row">
       <span class="mono" id="rateLabel" style="font-size:12px;">Consumo stimato: non ancora impostato</span>
     </div>
     <div class="row"><input type="number" id="knownRateLph" placeholder="Consumo (L/ora)" step="0.1"></div>
@@ -334,861 +160,101 @@
   </div>
 
   <div class="card">
-    <h3>Distacchi (live timing)</h3>
-    <div class="row"><input type="number" id="timingPosInput" placeholder="Posizione"></div>
-    <div class="row"><input type="text" id="timingGapAheadInput" placeholder="Distacco dal davanti es. +1.2s"></div>
-    <div class="row"><input type="text" id="timingGapBehindInput" placeholder="Distacco dal dietro es. -0.8s"></div>
-    <div class="row"><button class="btn primary" style="width:100%" onclick="sendTiming(this)">Invia distacchi all'auto</button></div>
-  </div>
+    <h3>Distacchi</h3>
+    <div class="row seg" id="timingSourceSeg">
+      <button class="btn seg-btn" id="segServer" onclick="setTimingSource('server', true)">AUB</button>
+      <button class="btn seg-btn" id="segPonte" onclick="setTimingSource('ponte', true)">Nostro</button>
+      <button class="btn seg-btn" id="segManual" onclick="setTimingSource('manual', true)">Manuali</button>
+    </div>
 
-  <div class="card">
-    <h3>Timer di partenza</h3>
-    <div class="row"><span class="mono" id="startTimerLabel" style="font-size:22px;">15:00</span></div>
-    <div class="row">
-      <input type="number" id="startTimerMinInput" placeholder="min" style="width:70px;" min="0">
-      <input type="number" id="startTimerSecInput" placeholder="sec" style="width:70px;" min="0" max="59">
-      <button class="btn small" onclick="setStartTimerValue()">Imposta</button>
+    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Sull'auto mostra:</span></div>
+    <div class="row seg" id="timingViewSeg">
+      <button class="btn seg-btn" id="segViewAss" onclick="setTimingView('assoluta')">Assoluta</button>
+      <button class="btn seg-btn" id="segViewCat" onclick="setTimingView('categoria')">Categoria</button>
     </div>
-    <div class="row" style="gap:8px;">
-      <button class="btn primary" style="flex:1" onclick="startTimerControl('start')">Start</button>
-      <button class="btn" style="flex:1" onclick="startTimerControl('pause')">Pausa</button>
-      <button class="btn" style="flex:1" onclick="startTimerControl('stop')">Stop</button>
-    </div>
-  </div>
 
-  <div class="card">
-    <h3>Timer di gara</h3>
-    <div class="row"><span class="mono" id="raceTimerLabel" style="font-size:22px;">8:00:00</span></div>
-    <div class="row" style="font-size:11px;color:var(--muted);">Durata (modificabile soprattutto in pausa, es. bandiera rossa)</div>
-    <div class="row">
-      <input type="number" id="raceTimerHourInput" placeholder="ore" style="width:70px;" min="0">
-      <input type="number" id="raceTimerMinInput" placeholder="min" style="width:70px;" min="0" max="59">
-      <button class="btn small" onclick="setRaceTimerValue()">Imposta</button>
+    <!-- ---- sorgente: classifica AUB ---- -->
+    <div id="timingServerPane">
+      <div class="row"><span class="mono" id="aubStatusLabel" style="font-size:12px;">Stato: non collegato</span></div>
+      <div class="row"><input type="number" id="aubDriverId" placeholder="Numero di gara della vettura"></div>
+      <div class="row" style="display:flex;gap:8px;">
+        <button class="btn primary" style="flex:1" onclick="aubConnect(this)">Collega</button>
+        <button class="btn small" style="flex:1" onclick="aubDisconnect()">Scollega</button>
+      </div>
+      <details style="margin-top:10px;">
+        <summary>Credenziali (solo se il server non le ha già)</summary>
+        <div class="row"><input type="text" id="aubUrl" placeholder="https://aub.esempio.it" autocomplete="off"></div>
+        <div class="row"><input type="text" id="aubUser" placeholder="Utente della squadra" autocomplete="username"></div>
+        <div class="row"><input type="password" id="aubPass" placeholder="Password" autocomplete="current-password"></div>
+        <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Lasciali vuoti se utente e password sono già impostati sul server (AUB_URL, AUB_USER, AUB_PASS): è il posto giusto dove tenerli.</span></div>
+      </details>
     </div>
-    <div class="row" style="gap:8px;">
-      <button class="btn primary" style="flex:1" onclick="raceTimerControl('start')">Riprendi</button>
-      <button class="btn" style="flex:1" onclick="raceTimerControl('pause')">Pausa</button>
-      <button class="btn" style="flex:1" onclick="raceTimerControl('stop')">Stop</button>
-    </div>
-    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
-      <span class="mono" id="timerPhaseLabel" style="font-size:12px;">Fase: partenza</span>
-    </div>
-  </div>
 
-  <div class="card">
-    <h3>Modalità test (velocizzata)</h3>
-    <div class="row" style="font-size:11px;color:var(--muted);">Accelera il passare del tempo sui timer per verificare rapidamente tutto il flusso. Disattivala prima della gara vera.</div>
-    <div class="row" style="gap:8px;flex-wrap:wrap;">
-      <button class="btn primary" id="testSpeedBtn1" style="flex:1" onclick="setTestSpeed(1)">x1 (reale)</button>
-      <button class="btn" id="testSpeedBtn60" style="flex:1" onclick="setTestSpeed(60)">x60</button>
-      <button class="btn" id="testSpeedBtn300" style="flex:1" onclick="setTestSpeed(300)">x300</button>
+    <!-- ---- sorgente: il nostro ponte (legge i siti di live timing) ---- -->
+    <div id="timingPontePane" hidden>
+      <div class="row"><span class="mono" id="ponteStatusLabel" style="font-size:12px;">Stato: non collegato</span></div>
+      <div class="row"><input type="text" id="ponteUrl" placeholder="Indirizzo della pagina dell'evento" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <div class="row"><input type="text" id="ponteNumber" placeholder="Numero di gara della vettura" inputmode="numeric" autocomplete="off"></div>
+      <div class="row" style="display:flex;gap:8px;">
+        <button class="btn primary" style="flex:1" onclick="ponteConnect(this)">Collega</button>
+        <button class="btn small" style="flex:1" onclick="ponteDisconnect()">Scollega</button>
+      </div>
+      <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Legge i distacchi dal nostro ponte, che sa leggere i vari siti di live timing, senza passare da AUB. Incolla l'indirizzo della pagina dell'evento e il numero di gara. Se l'evento non è ancora pubblicato resta in attesa.</span></div>
     </div>
-    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;font-size:11px;color:var(--muted);">Salta direttamente a un punto del flusso:</div>
-    <div class="row" style="gap:8px;flex-wrap:wrap;">
-      <button class="btn small" onclick="debugJump('start-30s')">Partenza -30s</button>
-      <button class="btn small" onclick="debugJump('start-near-zero')">Partenza -3s</button>
-    </div>
-    <div class="row" style="gap:8px;flex-wrap:wrap;">
-      <button class="btn small" onclick="debugJump('race-last-hour')">Gara: ultima ora</button>
-      <button class="btn small" onclick="debugJump('race-last-15min')">Gara: ultimi 15min</button>
-    </div>
-    <div class="row" style="gap:8px;flex-wrap:wrap;">
-      <button class="btn small" onclick="debugJump('race-near-finish')">Gara: quasi finita</button>
-      <button class="btn small" onclick="debugJump('reset')">Reset test</button>
+
+    <!-- ---- sorgente: inserimento manuale ---- -->
+    <div id="timingManualPane" hidden>
+      <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Il collegamento alla classifica resta spento finché sei su questa modalità.</span></div>
+      <div class="row"><input type="number" id="timingPosInput" placeholder="Posizione"></div>
+      <div class="row"><input type="text" id="timingGapAheadInput" placeholder="Distacco dal davanti es. +1.2s"></div>
+      <div class="row"><input type="text" id="timingNameAheadInput" placeholder="Chi hai davanti (squadra o numero)"></div>
+      <div class="row"><input type="text" id="timingGapBehindInput" placeholder="Distacco dal dietro es. -0.8s"></div>
+      <div class="row"><input type="text" id="timingNameBehindInput" placeholder="Chi hai dietro (squadra o numero)"></div>
+      <div class="row"><button class="btn primary" style="width:100%" onclick="sendTiming(this)">Invia distacchi all'auto</button></div>
     </div>
   </div>
 
   <div class="card">
-    <h3>Finish</h3>
-    <div class="row"><span>Modalità</span>
-      <select id="finishModeSelect" onchange="sendFinishConfig()" style="background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;">
-        <option value="manual">Manuale (decido io quando)</option>
-        <option value="auto">Automatica (a fine timer gara)</option>
-      </select>
-    </div>
-    <div class="row"><span>Sfondo</span>
-      <select id="finishBgSelect" onchange="sendFinishConfig()" style="background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;">
-        <option value="photo">Foto squadra</option>
-        <option value="dark">Scuro con coppa</option>
-      </select>
-    </div>
-    <div class="row"><input type="number" id="finishPosInput" placeholder="Posizione finale (es. 1)"></div>
-    <div class="row"><input type="text" id="finishDriverInput" placeholder="Nome pilota" oninput="sendFinishConfig()"></div>
-    <div class="row"><button class="btn primary" style="width:100%" onclick="triggerFinish(this)">Mostra Finish ora</button></div>
-  </div>
-
-  <div class="card">
-    <h3>Pulsanti rapidi auto</h3>
-    <div class="row" style="font-size:11px;color:var(--muted);">Il primo è il pulsante centrale (es. Rifornimento), gli altri tre sono quelli in basso.</div>
+    <h3>Pulsanti rapidi auto (4)</h3>
     <div id="qbEditor"></div>
     <button class="btn" onclick="saveQuickButtons()">Salva pulsanti</button>
   </div>
 
   <div class="card">
-    <h3>Messaggi a schermo intero</h3>
-    <div id="flashEditor"></div>
-    <button class="btn small" onclick="addFlashPreset()">+ aggiungi preset</button>
+    <h3>Allarme messaggi</h3>
+    <div class="row"><span>Sirena quando arriva un messaggio</span>
+      <label class="toggle"><input type="checkbox" id="sirenToggle" onchange="setSirenOn(this.checked)"><span class="knob"></span></label>
+    </div>
+    <div class="row"><span class="mono" style="font-size:12px;">Volume</span>
+      <input type="range" id="sirenVolume" min="20" max="100" step="10" oninput="setSirenVolume(this.value)">
+    </div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="testSiren()">Prova la sirena</button></div>
+    <div class="row"><span>Schermo sempre acceso</span>
+      <label class="toggle"><input type="checkbox" id="awakeToggle" onchange="setBoxAwake(this.checked)"><span class="knob"></span></label>
+    </div>
+    <div class="row"><span class="mono" id="awakeStatus" style="font-size:11px;color:var(--muted);">Spento: lo schermo si spegne come al solito.</span></div>
+    <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">La sirena suona solo con l'app aperta. A schermo spento arriva la notifica del telefono, con il suono scelto nelle sue impostazioni. Tocca "Prova la sirena" dopo aver aperto l'app: serve a sbloccare l'audio del browser.</span></div>
   </div>
 
   <div class="card">
-    <h3>Messaggi ricevuti dall'auto</h3>
-    <div id="log"></div>
-    <button class="btn small" style="margin-top:10px;" onclick="clearLog()">Cancella cronologia</button>
+    <h3>Notifiche</h3>
+    <span class="mono" id="pushStatus" style="font-size:12px;color:var(--muted);">In attivazione…</span>
   </div>
 </div>
 
-<script>
-const DEFAULT_SERVER_URL = 'https://pitwallaggiornata2.onrender.com';
-const $ = id => document.getElementById(id);
-let socket, code, role;
-let wakeLockRef = null;
-const VAPID_PUBLIC_KEY = 'BDL1U-RB9YWSWMNoB6_u7gjFrMAlIYkD4hkDFt_ZaauQw8k3OVCTYxfzsHaFSNDaDOSRPxToO3Va4lWbCzNK00M';
 
-function urlBase64ToUint8Array(base64String){
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
-
-function playAlertBeep(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.value = 880;
-    gain.gain.value = 0.15;
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    setTimeout(() => { osc.stop(); ctx.close(); }, 350);
-  }catch(e){}
-}
-
-async function setupPushNotifications(){
-  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  try{
-    const reg = await navigator.serviceWorker.ready;
-    const permission = await Notification.requestPermission();
-    if(permission !== 'granted'){
-      const el = $('pushStatus');
-      if(el) el.textContent = 'Notifiche non attive: permesso negato dal browser';
-      return;
-    }
-    let sub = await reg.pushManager.getSubscription();
-    if(!sub){
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-    }
-    socket.emit('registerPush', { subscription: sub.toJSON() });
-    const el = $('pushStatus');
-    if(el) el.textContent = 'Notifiche attive su questo dispositivo';
-  }catch(e){
-    const el = $('pushStatus');
-    if(el) el.textContent = 'Notifiche non disponibili su questo browser';
-  }
-}
-
-const DEFAULT_QB = [
-  {id:1,label:'Box',color:'#3fa9f5'},
-  {id:2,label:'Rifornimento',color:'#f5a623'},
-  {id:3,label:'Pilota',color:'#7ed321'},
-  {id:4,label:'Ripeti',color:'#bd10e0'},
-];
-const DEFAULT_FLASH = [
-  {text:'BOX QUESTO GIRO', color:'#F5C518', duration:8},
-  {text:'PUSH', color:'#E63946', duration:6},
-  {text:'TUTTO OK', color:'#3ECF6E', duration:6},
-];
-
-let quickButtons = load('pc_qb', DEFAULT_QB);
-let flashPresets = load('pc_flash', DEFAULT_FLASH);
-let fuelSystem = {
-  tankCapacityLiters: 100,
-  currentLiters: 100,
-  consumptionRatePerHour: null,
-  onTrack: false,
-  sessionStartAt: null,
-  sessionStartLiters: 0,
-};
-let fuelTickInterval = null;
-
-// ---------- TIMER DI PARTENZA / GARA / FINISH ----------
-let timerState = {
-  phase: 'start', startSeconds: 900, startRemaining: 900, startRunning: false, startUpdatedAt: Date.now(),
-  raceSeconds: 28800, raceRemaining: 28800, raceRunning: false, raceUpdatedAt: Date.now(),
-  speed: 1, finishMode: 'manual', finishBackground: 'photo', finishTriggered: false, finishPosition: null, finishDriverName: '',
-};
-let lastTiming = { position: null, gapAhead: '', gapBehind: '' };
-let localGreenUntil = 0;     // timestamp fino a cui mostrare il flash verde locale "IN GARA"
-let autoStartSent = false;   // evita di inviare più volte raceTimerAutoStart
-let popupActive = false;     // popup periodico (livello 1) attualmente mostrato
-let popupTimeoutRef = null;
-let prevRaceRemaining = null;
-let finishTriggerSent = false;
-let finishDismissedLocally = false;
-let tickIntervalStarted = false;
-
-function load(key, fallback){
-  try{ const v = JSON.parse(localStorage.getItem(key)); return v || fallback; }catch(e){ return fallback; }
-}
-function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
-
-// ---------- JOIN ----------
-function setLandingStatus(msg, isError){
-  const el = $('landingStatus');
-  if(!el) return;
-  el.textContent = msg || '';
-  el.style.color = isError ? 'var(--red)' : 'var(--muted)';
-}
-
-function joinAs(chosenRole){
-  const codeVal = $('teamCode').value.trim().toUpperCase();
-  if(!codeVal){
-    setLandingStatus('Inserisci prima il codice team', true);
-    $('teamCode').focus();
-    return;
-  }
-  code = codeVal;
-  role = chosenRole;
-  const serverUrl = $('serverUrl').value.trim() || DEFAULT_SERVER_URL;
-  localStorage.setItem('pc_code', code);
-  localStorage.setItem('pc_role', role);
-  localStorage.setItem('pc_server', serverUrl);
-  $('btnBox').disabled = true; $('btnAuto').disabled = true;
-  setLandingStatus('Connessione al server in corso…');
-  const joinTimeout = setTimeout(() => {
-    setLandingStatus('Il server ci sta mettendo più del solito (potrebbe essersi "addormentato"): attendi ancora qualche secondo…');
-  }, 8000);
-  connect(serverUrl, joinTimeout);
-}
-
-function connect(serverUrl, joinTimeout){
-  socket = io(serverUrl, { transports:['websocket','polling'] });
-  socket.on('connect', () => {
-    socket.emit('join', { code, role }, (res) => {
-      clearTimeout(joinTimeout);
-      if(!res || !res.ok){
-        setLandingStatus('Errore durante il collegamento, riprova.', true);
-        $('btnBox').disabled = false; $('btnAuto').disabled = false;
-        return;
-      }
-      setLandingStatus('');
-      applyState(res.state);
-      $('landing').hidden = true;
-      if(role === 'auto') enterAutoView(); else enterBoxView();
-      if(!tickIntervalStarted){ tickIntervalStarted = true; setInterval(globalTick, 250); }
-    });
-  });
-  socket.on('connect_error', () => {
-    setLandingStatus('Impossibile raggiungere il server. Controlla la connessione e riprova.', true);
-    $('btnBox').disabled = false; $('btnAuto').disabled = false;
-  });
-  registerListeners();
-}
-
-function applyState(state){
-  if(state.quickButtons) quickButtons = state.quickButtons;
-  document.body.classList.toggle('night', !state.dayMode);
-  if($('dayModeToggle')) $('dayModeToggle').checked = !state.dayMode;
-  if(state.fuelSystem){ fuelSystem = state.fuelSystem; }
-  renderFuel(state.fuel.percent);
-  if(state.timing) renderTiming(state.timing);
-  if(state.timer){
-    timerState = state.timer;
-    autoStartSent = timerState.phase !== 'start';
-    finishTriggerSent = timerState.phase === 'finished';
-    finishDismissedLocally = false;
-    prevRaceRemaining = null;
-  }
-  renderCenterButton();
-  renderBottomGrid();
-  renderQbEditor();
-  renderFlashEditor();
-  renderFuelSystemUI();
-  renderTimerBoxUI();
-  resumeFuelTicking();
-}
-
-function registerListeners(){
-  socket.on('quickMessageReceived', (m) => addLog(m));
-  socket.on('flashMessage', (m) => { if(role==='auto') showFlash(m); });
-  socket.on('fuelUpdate', (f) => { renderFuel(f.percent); if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: '+f.percent+'%'; });
-  socket.on('autonomyUpdate', (a) => { if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = 'Autonomia stimata: '+(a.minutes==null?'—':a.minutes+' min'); });
-  socket.on('fuelSystemUpdate', (fs) => { fuelSystem = fs; renderFuelSystemUI(); resumeFuelTicking(); });
-  socket.on('dayModeUpdate', (d) => { document.body.classList.toggle('night', !d.dayMode); if($('dayModeToggle')) $('dayModeToggle').checked = !d.dayMode; });
-  socket.on('quickButtonsUpdate', (q) => { quickButtons = q.buttons; renderCenterButton(); renderBottomGrid(); renderQbEditor(); });
-  socket.on('timingUpdate', renderTiming);
-  socket.on('timerUpdate', (t) => {
-    const wasPhase = timerState.phase;
-    const wasStartRunning = timerState.startRunning;
-    timerState = t;
-    if(t.phase === 'start' && (wasPhase !== 'start' || (!wasStartRunning && t.startRunning))){
-      autoStartSent = false;
-    }
-    if(t.phase === 'finished' && wasPhase !== 'finished'){
-      finishDismissedLocally = false;
-    }
-    if(t.phase !== 'finished'){
-      finishTriggerSent = false;
-    }
-    if(t.phase === 'race' && wasPhase !== 'race'){
-      prevRaceRemaining = null;
-      popupActive = false;
-    }
-    renderTimerBoxUI();
-  });
-}
-
-// ---------- AUTO VIEW ----------
-async function enterAutoView(){
-  $('autoView').hidden = false;
-  renderCenterButton();
-  renderBottomGrid();
-  try{ await document.documentElement.requestFullscreen(); }catch(e){}
-  try{ await screen.orientation.lock('landscape'); }catch(e){ checkOrientation(); }
-  window.addEventListener('resize', checkOrientation);
-  checkOrientation();
-  requestWakeLock();
-  document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible') requestWakeLock(); });
-}
-function checkOrientation(){
-  $('rotateHint').hidden = window.innerWidth > window.innerHeight;
-}
-async function requestWakeLock(){
-  try{ wakeLockRef = await navigator.wakeLock.request('screen'); }catch(e){ /* non supportato o negato */ }
-}
-
-function renderFuel(percent){
-  $('fuelPct') && ($('fuelPct').textContent = percent + '%');
-  const fill = $('fuelFill');
-  if(!fill) return;
-  fill.style.width = percent + '%';
-  const hue = Math.max(0, Math.min(120, percent * 1.2)); // 100%=verde(120), 0%=rosso(0)
-  fill.style.background = `hsl(${hue}, 75%, 48%)`;
-}
-function renderTiming(t){
-  if(!t) return;
-  lastTiming = t;
-}
-
-function renderCenterButton(){
-  const btn = $('centerQuickBtn');
-  if(!btn || !quickButtons[0]) return;
-  const b = quickButtons[0];
-  btn.style.background = b.color;
-  btn.textContent = b.label;
-  btn.onclick = () => sendQuick(b, btn);
-}
-function renderBottomGrid(){
-  const grid = $('bottomRow');
-  if(!grid) return;
-  grid.innerHTML = '';
-  quickButtons.slice(1, 4).forEach(b => {
-    const btn = document.createElement('button');
-    btn.className = 'quick-btn';
-    btn.style.background = b.color;
-    btn.textContent = b.label;
-    btn.onclick = () => sendQuick(b, btn);
-    grid.appendChild(btn);
-  });
-}
-function sendQuick(b, btnEl){
-  socket.emit('quickMessage', { buttonId: b.id, label: b.label });
-  btnEl.classList.add('flashing');
-  setTimeout(()=>btnEl.classList.remove('flashing'), 800);
-  if(navigator.vibrate) navigator.vibrate(60);
-}
-
-function showFlash(m){
-  const ov = $('flashOverlay');
-  ov.style.background = m.color;
-  $('flashText').textContent = m.text;
-  ov.hidden = false;
-  try{
-    const u = new SpeechSynthesisUtterance(m.text);
-    u.lang = 'it-IT';
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
-  }catch(e){}
-  clearTimeout(showFlash._t);
-  showFlash._t = setTimeout(()=>{ ov.hidden = true; }, (m.durationSeconds||6)*1000);
-}
-
-// ---------- BOX VIEW ----------
-function enterBoxView(){
-  $('boxView').hidden = false;
-  $('boxCodePill').textContent = code;
-  renderQbEditor();
-  renderFlashEditor();
-  renderFuelSystemUI();
-  setupPushNotifications();
-}
-function sendDayMode(){ socket.emit('dayModeUpdate', { dayMode: !$('dayModeToggle').checked }); }
-
-function renderFuelSystemUI(){
-  const fs = fuelSystem;
-  if($('tankCapacityInput')) $('tankCapacityInput').value = fs.tankCapacityLiters;
-  if($('trackStatusLabel')) $('trackStatusLabel').textContent = 'Stato: ' + (fs.onTrack ? 'in pista' : 'ai box');
-  if($('rateLabel')) $('rateLabel').textContent = fs.consumptionRatePerHour
-    ? 'Consumo stimato: ' + fs.consumptionRatePerHour.toFixed(1) + ' L/ora'
-    : 'Consumo stimato: non ancora impostato';
-  if($('knownRateLph') && fs.consumptionRatePerHour) $('knownRateLph').value = fs.consumptionRatePerHour.toFixed(1);
-  const liveLiters = computeLiveLiters();
-  if($('litersNowLabel')) $('litersNowLabel').textContent = 'Litri in serbatoio: ' + liveLiters.toFixed(1) + ' / ' + fs.tankCapacityLiters + ' L';
-  const pct = fs.tankCapacityLiters > 0 ? Math.round((liveLiters / fs.tankCapacityLiters) * 100) : 0;
-  if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: ' + pct + '%';
-  const autonomyMin = fs.consumptionRatePerHour ? (liveLiters / fs.consumptionRatePerHour) * 60 : null;
-  if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = 'Autonomia stimata: ' + (autonomyMin==null ? '—' : Math.round(autonomyMin)+' min');
-}
-
-// Litri attuali "in tempo reale": se la macchina è in pista, scala dal momento
-// in cui è uscita (sessionStartAt/sessionStartLiters); se è ai box resta fermo.
-function computeLiveLiters(){
-  const fs = fuelSystem;
-  if(!fs.onTrack || !fs.consumptionRatePerHour || !fs.sessionStartAt) return fs.currentLiters;
-  const elapsedHours = (Date.now() - fs.sessionStartAt) / 3600000;
-  return Math.max(0, fs.sessionStartLiters - elapsedHours * fs.consumptionRatePerHour);
-}
-
-function syncFuelSystem(){ socket.emit('fuelSystemUpdate', fuelSystem); }
-
-function tickFuelSystem(){
-  const liveLiters = computeLiveLiters();
-  const pct = fuelSystem.tankCapacityLiters > 0 ? Math.round((liveLiters / fuelSystem.tankCapacityLiters) * 100) : 0;
-  const autonomyMin = fuelSystem.consumptionRatePerHour ? Math.round((liveLiters / fuelSystem.consumptionRatePerHour) * 60) : null;
-  renderFuelSystemUI();
-  socket.emit('fuelUpdate', { percent: pct });
-  socket.emit('autonomyUpdate', { minutes: autonomyMin });
-  if(liveLiters <= 0){
-    fuelSystem.currentLiters = 0;
-    fuelSystem.onTrack = false;
-    stopFuelTicking();
-    syncFuelSystem();
-  }
-}
-function stopFuelTicking(){ clearInterval(fuelTickInterval); fuelTickInterval = null; }
-function resumeFuelTicking(){
-  stopFuelTicking();
-  if(fuelSystem.onTrack && fuelSystem.consumptionRatePerHour){
-    fuelTickInterval = setInterval(tickFuelSystem, 3000);
-    tickFuelSystem();
-  } else {
-    renderFuelSystemUI();
-  }
-}
-
-function setTankCapacity(){
-  const cap = +$('tankCapacityInput').value;
-  if(!cap) return;
-  fuelSystem.tankCapacityLiters = cap;
-  // i litri attuali non possono mai superare la nuova capienza
-  fuelSystem.currentLiters = Math.min(fuelSystem.currentLiters, cap);
-  if(fuelSystem.sessionStartLiters) fuelSystem.sessionStartLiters = Math.min(fuelSystem.sessionStartLiters, cap);
-  syncFuelSystem();
-  renderFuelSystemUI();
-}
-
-function setStartingLiters(){
-  const liters = +$('startingLitersInput').value;
-  if(liters === 0 || isNaN(liters) || $('startingLitersInput').value === '') return;
-  fuelSystem.currentLiters = Math.min(liters, fuelSystem.tankCapacityLiters);
-  fuelSystem.onTrack = false;
-  fuelSystem.sessionStartAt = null;
-  stopFuelTicking();
-  syncFuelSystem();
-  renderFuelSystemUI();
-}
-
-function doRefuel(){
-  const added = +$('refuelLitersInput').value;
-  if(!added) return;
-  const before = computeLiveLiters();
-  fuelSystem.currentLiters = Math.min(fuelSystem.tankCapacityLiters, before + added);
-  fuelSystem.onTrack = false; // il rifornimento avviene sempre a macchina ferma ai box
-  fuelSystem.sessionStartAt = null;
-  stopFuelTicking();
-  syncFuelSystem();
-  renderFuelSystemUI();
-  $('refuelLitersInput').value = '';
-}
-
-function setKnownRate(){
-  const lph = +$('knownRateLph').value;
-  if(!lph){
-    if($('rateLabel')) $('rateLabel').textContent = 'Inserisci un consumo valido (L/ora)';
-    return;
-  }
-  fuelSystem.consumptionRatePerHour = lph;
-  syncFuelSystem();
-  resumeFuelTicking();
-}
-
-function setOnTrack(goingOnTrack){
-  if(goingOnTrack){
-    fuelSystem.currentLiters = computeLiveLiters(); // consolida il valore prima di ripartire
-    fuelSystem.onTrack = true;
-    fuelSystem.sessionStartAt = Date.now();
-    fuelSystem.sessionStartLiters = fuelSystem.currentLiters;
-  } else {
-    fuelSystem.currentLiters = computeLiveLiters(); // congela il valore corrente
-    fuelSystem.onTrack = false;
-    fuelSystem.sessionStartAt = null;
-  }
-  syncFuelSystem();
-  resumeFuelTicking();
-}
-
-function markDryAndCalibrate(){
-  if(!fuelSystem.onTrack || !fuelSystem.sessionStartAt){
-    if($('rateLabel')) $('rateLabel').textContent = 'Metti prima la macchina "in pista" per poter calibrare';
-    return;
-  }
-  const elapsedHours = (Date.now() - fuelSystem.sessionStartAt) / 3600000;
-  fuelSystem.consumptionRatePerHour = elapsedHours > 0 ? fuelSystem.sessionStartLiters / elapsedHours : null;
-  fuelSystem.currentLiters = 0;
-  fuelSystem.onTrack = false;
-  fuelSystem.sessionStartAt = null;
-  stopFuelTicking();
-  syncFuelSystem();
-  renderFuelSystemUI();
-  socket.emit('fuelUpdate', { percent: 0 });
-  socket.emit('autonomyUpdate', { minutes: 0 });
-}
-function flashConfirm(btnEl){
-  if(!btnEl) return;
-  const originalText = btnEl.textContent;
-  btnEl.classList.add('sent-confirm');
-  btnEl.textContent = 'Inviato ✓';
-  setTimeout(() => {
-    btnEl.classList.remove('sent-confirm');
-    btnEl.textContent = originalText;
-  }, 1200);
-}
-
-function sendTiming(btnEl){
-  socket.emit('timingUpdate', {
-    position: $('timingPosInput').value ? +$('timingPosInput').value : null,
-    gapAhead: $('timingGapAheadInput').value,
-    gapBehind: $('timingGapBehindInput').value,
-  });
-  flashConfirm(btnEl);
-}
-
-// ---------- TIMER: calcolo tempo rimanente e formattazione ----------
-// Stesso calcolo del server: nessun ticking server-side, ogni dispositivo
-// deriva il tempo rimanente da (valore salvato, momento del salvataggio,
-// se sta scorrendo, velocità) così tutti restano sincronizzati.
-function computeRemaining(base, updatedAt, running, speed){
-  if(!running) return base;
-  const elapsed = (Date.now() - updatedAt) / 1000 * (speed || 1);
-  return Math.max(0, base - elapsed);
-}
-function formatHMS(totalSeconds){
-  totalSeconds = Math.max(0, Math.round(totalSeconds));
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  const pad = n => String(n).padStart(2, '0');
-  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-}
-
-// ---------- TICK GLOBALE (ogni 250ms): aggiorna box e schermo auto ----------
-function globalTick(){
-  renderTimerBoxUI();
-  if(role !== 'auto') return;
-  if(timerState.phase === 'finished' && !finishDismissedLocally){
-    if($('finishOverlay')) $('finishOverlay').hidden = false;
-    updateFinishOverlay();
-  } else {
-    if($('finishOverlay')) $('finishOverlay').hidden = true;
-    if($('autoView') && !$('autoView').hidden) updateCarTopRow();
-  }
-}
-
-// ---------- SCHERMO AUTO: riga superiore (partenza / distacchi / popup) ----------
-function updateCarTopRow(){
-  const row = $('topRow');
-  if(!row) return;
-  const now = Date.now();
-
-  // flash verde locale "macchina in gara" (5s), priorità su tutto il resto
-  if(now < localGreenUntil){
-    row.className = 'phase-green';
-    row.innerHTML = `<div class="t-label">VIA!</div><div class="t-big" style="font-size:clamp(40px,8vw,64px);">IN GARA</div>`;
-    return;
-  }
-
-  if(timerState.phase === 'start'){
-    const remaining = computeRemaining(timerState.startRemaining, timerState.startUpdatedAt, timerState.startRunning, timerState.speed);
-    let cls = '';
-    if(remaining <= 30 && remaining > 0){
-      cls = (Math.floor(now / 500) % 2 === 0) ? 'flash-yellow' : 'flash-red';
-    }
-    row.className = cls;
-    row.innerHTML = `
-      <div class="t-label">partenza tra</div>
-      <div class="t-big">${formatHMS(remaining)}</div>
-      <div class="t-sub">lampeggio giallo / rosso — ultimi 30s</div>`;
-
-    if(remaining <= 0 && timerState.startRunning && !autoStartSent){
-      autoStartSent = true;
-      localGreenUntil = now + 5000;
-      socket.emit('raceTimerAutoStart');
-    }
-    return;
-  }
-
-  if(timerState.phase === 'race'){
-    const remaining = computeRemaining(timerState.raceRemaining, timerState.raceUpdatedAt, timerState.raceRunning, timerState.speed);
-
-    checkPeriodicPopup(remaining);
-
-    if(popupActive){
-      row.className = 'mode-race-glance';
-      row.innerHTML = `
-        <div class="t-label">mancano</div>
-        <div class="t-big">${formatHMS(remaining)}</div>
-        <div class="t-sub">gara in corso</div>`;
-    } else {
-      row.className = 'mode-distacchi';
-      row.innerHTML = `
-        <div class="gap-col"><div class="lbl">DAVANTI</div><div class="val">${lastTiming.gapAhead || '—'}</div></div>
-        <div class="gap-col pos"><div class="lbl">POSIZIONE</div><div class="val">${lastTiming.position != null ? ('P' + lastTiming.position) : '—'}</div></div>
-        <div class="gap-col"><div class="lbl">DIETRO</div><div class="val">${lastTiming.gapBehind || '—'}</div></div>`;
-    }
-
-    if(remaining <= 0 && timerState.raceRunning && !finishTriggerSent){
-      finishTriggerSent = true;
-      if(timerState.finishMode === 'auto'){
-        socket.emit('finishTrigger', {});
-      }
-    }
-  }
-}
-
-// Popup periodico (livello 1): ogni ora intera trascorsa, e ogni 15 minuti
-// nell'ultima ora, per 10 secondi mostra il riepilogo tempo rimanente.
-function checkPeriodicPopup(remaining){
-  if(prevRaceRemaining == null){ prevRaceRemaining = remaining; return; }
-  if(popupActive){ prevRaceRemaining = remaining; return; } // un popup è già a schermo: non ne avviamo un altro
-  if(remaining > prevRaceRemaining){ prevRaceRemaining = remaining; return; } // timer riportato indietro dal box
-  const raceSeconds = timerState.raceSeconds;
-  const thresholds = [];
-  for(let k = 1; ; k++){
-    const r = raceSeconds - k * 3600;
-    if(r <= 0) break;
-    thresholds.push(r);
-  }
-  [2700, 1800, 900].forEach(s => { if(s < raceSeconds) thresholds.push(s); });
-
-  const crossed = thresholds.find(th => prevRaceRemaining > th && remaining <= th);
-  prevRaceRemaining = remaining;
-  if(crossed !== undefined) triggerPeriodicPopup();
-}
-function triggerPeriodicPopup(){
-  popupActive = true;
-  clearTimeout(popupTimeoutRef);
-  // In modalità test (velocità accelerata) il popup resta a schermo per
-  // meno tempo, proporzionalmente, così non "mangia" le soglie successive
-  // che altrimenti arriverebbero troppo ravvicinate nel tempo reale.
-  const speed = timerState.speed || 1;
-  const durationMs = speed > 1 ? Math.max(400, Math.min(10000, 10000 / speed)) : 10000;
-  popupTimeoutRef = setTimeout(() => { popupActive = false; }, durationMs);
-}
-
-// ---------- FINISH ----------
-function updateFinishOverlay(){
-  const ov = $('finishOverlay');
-  if(!ov) return;
-  ov.classList.toggle('bg-photo', timerState.finishBackground !== 'dark');
-  ov.classList.toggle('bg-dark', timerState.finishBackground === 'dark');
-  if($('finishPosEl')) $('finishPosEl').textContent = timerState.finishPosition != null ? ('P' + timerState.finishPosition) : 'P—';
-  if($('finishDriverEl')) $('finishDriverEl').textContent = timerState.finishDriverName ? ('Complimenti, ' + timerState.finishDriverName + '!') : 'Complimenti!';
-}
-
-let dismissHoldTimer = null, dismissHoldStart = 0, dismissHoldRAF = null;
-function startDismissHold(){
-  dismissHoldStart = Date.now();
-  clearTimeout(dismissHoldTimer);
-  dismissHoldTimer = setTimeout(() => {
-    finishDismissedLocally = true;
-    if($('finishOverlay')) $('finishOverlay').hidden = true;
-    cancelDismissHold();
-  }, 10000);
-  cancelAnimationFrame(dismissHoldRAF);
-  const step = () => {
-    const pct = Math.min(100, ((Date.now() - dismissHoldStart) / 10000) * 100);
-    if($('finishDismissFill')) $('finishDismissFill').style.height = pct + '%';
-    if(pct < 100) dismissHoldRAF = requestAnimationFrame(step);
-  };
-  dismissHoldRAF = requestAnimationFrame(step);
-}
-function cancelDismissHold(){
-  clearTimeout(dismissHoldTimer); dismissHoldTimer = null;
-  cancelAnimationFrame(dismissHoldRAF); dismissHoldRAF = null;
-  if($('finishDismissFill')) $('finishDismissFill').style.height = '0%';
-}
-(function registerDismissHold(){
-  const fd = document.getElementById('finishDismiss');
-  if(!fd) return;
-  fd.addEventListener('pointerdown', startDismissHold);
-  fd.addEventListener('pointerup', cancelDismissHold);
-  fd.addEventListener('pointerleave', cancelDismissHold);
-  fd.addEventListener('pointercancel', cancelDismissHold);
-})();
-
-// ---------- BOX: pannello timer, modalità test, Finish ----------
-function renderTimerBoxUI(){
-  if($('startTimerLabel')){
-    const r = computeRemaining(timerState.startRemaining, timerState.startUpdatedAt, timerState.startRunning, timerState.speed);
-    $('startTimerLabel').textContent = formatHMS(r);
-  }
-  if($('raceTimerLabel')){
-    const r = computeRemaining(timerState.raceRemaining, timerState.raceUpdatedAt, timerState.raceRunning, timerState.speed);
-    $('raceTimerLabel').textContent = formatHMS(r);
-  }
-  if($('timerPhaseLabel')){
-    const phaseText = {start:'partenza', race:'gara', finished:'terminata'}[timerState.phase] || timerState.phase;
-    $('timerPhaseLabel').textContent = 'Fase: ' + phaseText;
-  }
-  if($('finishModeSelect') && document.activeElement !== $('finishModeSelect')) $('finishModeSelect').value = timerState.finishMode;
-  if($('finishBgSelect') && document.activeElement !== $('finishBgSelect')) $('finishBgSelect').value = timerState.finishBackground;
-  if($('finishDriverInput') && document.activeElement !== $('finishDriverInput')) $('finishDriverInput').value = timerState.finishDriverName || '';
-  ['1','60','300'].forEach(sp => {
-    const btn = $('testSpeedBtn' + sp);
-    if(btn) btn.classList.toggle('primary', Number(sp) === timerState.speed);
-  });
-}
-
-function setStartTimerValue(){
-  const min = +($('startTimerMinInput').value || 0);
-  const sec = +($('startTimerSecInput').value || 0);
-  const total = min * 60 + sec;
-  if(!total) return;
-  socket.emit('timerStartSet', { seconds: total });
-}
-function startTimerControl(action){ socket.emit('timerStartControl', { action }); }
-
-function setRaceTimerValue(){
-  const h = +($('raceTimerHourInput').value || 0);
-  const m = +($('raceTimerMinInput').value || 0);
-  const total = h * 3600 + m * 60;
-  if(!total) return;
-  socket.emit('timerRaceSet', { seconds: total });
-}
-function raceTimerControl(action){ socket.emit('timerRaceControl', { action }); }
-
-function setTestSpeed(speed){ socket.emit('timerTestSpeed', { speed }); }
-function debugJump(preset){ socket.emit('timerDebugJump', { preset }); }
-
-function sendFinishConfig(){
-  socket.emit('finishConfigUpdate', {
-    mode: $('finishModeSelect') ? $('finishModeSelect').value : undefined,
-    background: $('finishBgSelect') ? $('finishBgSelect').value : undefined,
-    driverName: $('finishDriverInput') ? $('finishDriverInput').value : undefined,
-  });
-}
-function triggerFinish(btnEl){
-  const posVal = $('finishPosInput').value;
-  socket.emit('finishTrigger', {
-    position: posVal ? +posVal : undefined,
-    driverName: $('finishDriverInput').value || undefined,
-  });
-  flashConfirm(btnEl);
-}
-
-function renderQbEditor(){
-  const el = $('qbEditor');
-  if(!el) return;
-  el.innerHTML = '';
-  quickButtons.forEach((b, i) => {
-    const tag = document.createElement('div');
-    tag.style.cssText = 'font-size:10px;color:var(--muted);letter-spacing:.08em;margin:' + (i===0?'0':'10px') + ' 0 4px;text-transform:uppercase;';
-    tag.textContent = i === 0 ? 'centrale' : ('inferiore ' + i);
-    el.appendChild(tag);
-    const row = document.createElement('div');
-    row.className = 'qb-row';
-    row.innerHTML = `
-      <input type="text" value="${b.label}" oninput="quickButtons[${i}].label=this.value">
-      <input type="color" value="${b.color}" oninput="quickButtons[${i}].color=this.value">`;
-    el.appendChild(row);
-  });
-}
-function saveQuickButtons(){
-  save('pc_qb', quickButtons);
-  socket.emit('quickButtonsUpdate', { buttons: quickButtons });
-}
-
-function renderFlashEditor(){
-  const el = $('flashEditor');
-  if(!el) return;
-  el.innerHTML = '';
-  flashPresets.forEach((p, i) => {
-    const row = document.createElement('div');
-    row.className = 'flash-row';
-    row.innerHTML = `
-      <input type="text" value="${p.text}" oninput="flashPresets[${i}].text=this.value">
-      <input type="color" value="${p.color}" oninput="flashPresets[${i}].color=this.value">
-      <input type="number" value="${p.duration}" min="2" max="60" oninput="flashPresets[${i}].duration=+this.value" title="secondi">
-      <button class="btn small primary" onclick="sendFlashPreset(${i}, this)">Invia</button>`;
-    el.appendChild(row);
-  });
-}
-function addFlashPreset(){
-  flashPresets.push({text:'NUOVO MESSAGGIO', color:'#2FB6C4', duration:6});
-  save('pc_flash', flashPresets);
-  renderFlashEditor();
-}
-function sendFlashPreset(i, btnEl){
-  save('pc_flash', flashPresets);
-  const p = flashPresets[i];
-  socket.emit('flashMessage', { text: p.text, color: p.color, durationSeconds: p.duration });
-  flashConfirm(btnEl);
-}
-
-function addLog(m){
-  const log = $('log');
-  if(!log) return;
-  const div = document.createElement('div');
-  div.className = 'log-item';
-  const time = new Date(m.at).toLocaleTimeString('it-IT');
-  div.innerHTML = `<span>${m.label}</span><span class="t">${time}</span>`;
-  log.prepend(div);
-  while(log.children.length > 5){
-    log.removeChild(log.lastElementChild);
-  }
-  if(navigator.vibrate) navigator.vibrate([40,40,40]);
-  playAlertBeep();
-}
-function clearLog(){
-  const log = $('log');
-  if(log) log.innerHTML = '';
-}
-
-function resetRole(){
-  if(socket) socket.disconnect();
-  localStorage.removeItem('pc_code');
-  localStorage.removeItem('pc_role');
-  localStorage.removeItem('pc_server');
-  location.reload();
-}
-
-// ---------- AUTO RECONNECT ----------
-window.addEventListener('load', () => {
-  const savedCode = localStorage.getItem('pc_code');
-  const savedRole = localStorage.getItem('pc_role');
-  const savedServer = localStorage.getItem('pc_server');
-  if(savedCode && savedRole && savedServer){
-    code = savedCode; role = savedRole;
-    connect(savedServer);
-  }
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
-  }
-});
-</script>
+<!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
+     dipendenze, e le funzioni restano globali come le vogliono gli onclick
+     scritti nel markup. core.js per primo, app.js per ultimo. -->
+<script src="js/core.js?v=5"></script>
+<script src="js/push.js?v=5"></script>
+<script src="js/connection.js?v=5"></script>
+<script src="js/autoview.js?v=5"></script>
+<script src="js/fuel.js?v=5"></script>
+<script src="js/boxview.js?v=5"></script>
+<script src="js/timing.js?v=5"></script>
+<script src="js/race.js?v=5"></script>
+<script src="js/install.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>
