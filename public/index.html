@@ -42,7 +42,13 @@
 <!-- ============ AUTO VIEW ============ -->
 <div id="autoView" hidden>
   <button id="changeRoleBtn" onclick="resetRole()">◄ cambia</button>
-  <div class="timing-strip">
+  <div class="timing-strip" id="timerStartBanner" hidden>
+    <div style="text-align:center;width:100%;">
+      <div class="lbl">PARTENZA IN</div>
+      <span class="mono" id="timerStartBannerDisplay" style="font-size:28px;font-weight:700;color:var(--yellow);">—</span>
+    </div>
+  </div>
+  <div class="timing-strip" id="timingStrip">
     <div class="side" style="text-align:left;">
       <div class="lbl">DAVANTI</div>
       <span class="gap" id="timingGapAhead">—</span>
@@ -67,6 +73,27 @@
 </div>
 
 <div id="flashOverlay" hidden><div class="txt" id="flashText"></div></div>
+
+<div id="timerPopup" hidden class="timer-popup">
+  <div class="display" id="timerPopupText" style="font-size:40px;"></div>
+</div>
+
+<div id="finishScreen" hidden class="finish-screen">
+  <img src="finish-photo.jpg" class="finish-photo-img" alt="" />
+  <div class="finish-overlay-gradient"></div>
+  <div class="finish-content">
+    <div class="finish-position" id="finishPositionLabel">—</div>
+    <div class="finish-driver" id="finishDriverLabel"></div>
+  </div>
+  <div class="finish-x" id="finishXBtn"
+       onpointerdown="finishHoldStart(event)"
+       onpointerup="finishHoldCancel()"
+       onpointerleave="finishHoldCancel()"
+       onpointercancel="finishHoldCancel()">
+    ✕
+    <div class="finish-x-fill" id="finishXFill"></div>
+  </div>
+</div>
 
 <div id="rotateHint" hidden>
   <div class="display" style="font-size:22px;">Ruota il telefono in orizzontale</div>
@@ -94,6 +121,68 @@
       <button class="btn state-btn green" id="btnRaceStart" onclick="startRace()">Avvio gara</button>
       <button class="btn state-btn red" id="btnRaceStop" onclick="stopRace()">Fine gara</button>
     </div>
+  </div>
+
+  <!-- Timer di partenza e di gara mostrati sull'auto, + modalita' test accelerato -->
+  <div class="card">
+    <h3>Timer gara</h3>
+    <div class="row"><span class="mono" id="timerPhaseLabel" style="font-size:12px;">Fase: conto alla rovescia di partenza</span></div>
+
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" style="font-size:12px;">Conto alla rovescia di partenza (minuti)</span>
+    </div>
+    <div class="row"><input type="number" id="timerStartInput" placeholder="es. 15"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="timerStartSet()">Imposta durata partenza</button></div>
+    <div class="row"><span class="mono" id="timerStartDisplay" style="font-size:22px;font-weight:700;">—</span></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn small" onclick="timerStartControl('start')">Avvia</button>
+      <button class="btn small" onclick="timerStartControl('pause')">Pausa</button>
+      <button class="btn small" onclick="timerStartControl('stop')">Azzera</button>
+    </div>
+
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" style="font-size:12px;">Durata gara (ore)</span>
+    </div>
+    <div class="row"><input type="number" id="timerRaceInput" step="0.5" placeholder="es. 8"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="timerRaceSet()">Imposta durata gara</button></div>
+    <div class="row"><span class="mono" id="timerRaceDisplay" style="font-size:22px;font-weight:700;">—</span></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn small" onclick="timerRaceControl('start')">Avvia</button>
+      <button class="btn small" onclick="timerRaceControl('pause')">Pausa</button>
+      <button class="btn small" onclick="timerRaceControl('stop')">Azzera</button>
+    </div>
+
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" id="timerSpeedLabel" style="font-size:12px;">Velocità test: x1</span>
+    </div>
+    <div class="row seg">
+      <button class="btn seg-btn" id="timerSpeed1" onclick="timerSetSpeed(1)">x1</button>
+      <button class="btn seg-btn" id="timerSpeed60" onclick="timerSetSpeed(60)">x60</button>
+      <button class="btn seg-btn" id="timerSpeed300" onclick="timerSetSpeed(300)">x300</button>
+    </div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn small" onclick="timerDebugJump('start-30s')">Salta: 30s al via</button>
+      <button class="btn small" onclick="timerDebugJump('race-last-15min')">Salta: ultimi 15'</button>
+      <button class="btn small" onclick="timerDebugJump('race-near-finish')">Salta: arrivo</button>
+      <button class="btn small" onclick="timerDebugJump('reset')">Reset completo</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Finish</h3>
+    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Attivazione:</span></div>
+    <div class="row seg">
+      <button class="btn seg-btn" id="finishModeManual" onclick="finishSetMode('manual')">Manuale</button>
+      <button class="btn seg-btn" id="finishModeAuto" onclick="finishSetMode('auto')">Automatica</button>
+    </div>
+    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Sfondo:</span></div>
+    <div class="row seg">
+      <button class="btn seg-btn" id="finishBgPhoto" onclick="finishSetBackground('photo')">Foto squadra</button>
+      <button class="btn seg-btn" id="finishBgDark" onclick="finishSetBackground('dark')">Scuro</button>
+    </div>
+    <div class="row"><input type="text" id="finishDriverInput" placeholder="Nome pilota" oninput="finishDriverNameChanged()"></div>
+    <div class="row"><input type="number" id="finishPositionInput" placeholder="Posizione (vuoto = dai distacchi)"></div>
+    <div class="row"><button class="btn primary" style="width:100%" onclick="finishTriggerManual()">Mostra schermata Finish</button></div>
   </div>
 
   <!-- 1. Carburante e stato in pista / ai box -->
@@ -254,6 +343,7 @@
 <script src="js/boxview.js?v=5"></script>
 <script src="js/timing.js?v=5"></script>
 <script src="js/race.js?v=5"></script>
+<script src="js/timer.js?v=5"></script>
 <script src="js/install.js?v=5"></script>
 <script src="js/app.js?v=5"></script>
 </body>
