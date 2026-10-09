@@ -29,7 +29,9 @@ function renderFuelSystemUI(){
   const pct = fs.tankCapacityLiters > 0 ? Math.round((liveLiters / fs.tankCapacityLiters) * 100) : 0;
   if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: ' + pct + '%';
   const autonomyMin = fs.consumptionRatePerHour ? (liveLiters / fs.consumptionRatePerHour) * 60 : null;
-  if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = 'Autonomia stimata: ' + (autonomyMin==null ? '—' : Math.round(autonomyMin)+' min');
+  const autonomyTxt = 'Autonomia stimata: ' + (autonomyMin==null ? '—' : Math.round(autonomyMin)+' min');
+  if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = autonomyTxt;
+  if($('autonomyLiveAuto')) $('autonomyLiveAuto').textContent = autonomyTxt;
 }
 
 function computeLiveLiters(){

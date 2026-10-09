@@ -138,7 +138,11 @@ function registerListeners(){
   socket.on('historyCleared', clearHistoryLocal);
   socket.on('flashMessage', (m) => { if(role==='auto') showFlash(m); });
   socket.on('fuelUpdate', (f) => { renderFuel(f.percent); if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: '+f.percent+'%'; });
-  socket.on('autonomyUpdate', (a) => { if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = 'Autonomia stimata: '+(a.minutes==null?'—':a.minutes+' min'); });
+  socket.on('autonomyUpdate', (a) => {
+    const txt = 'Autonomia stimata: '+(a.minutes==null?'—':a.minutes+' min');
+    if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = txt;
+    if($('autonomyLiveAuto')) $('autonomyLiveAuto').textContent = txt;
+  });
   socket.on('fuelSystemUpdate', (fs) => { fuelSystem = fs; saveFuelLocal(); renderFuelSystemUI(); resumeFuelTicking(); });
   socket.on('dayModeUpdate', (d) => { document.body.classList.toggle('night', !d.dayMode); if($('dayModeToggle')) $('dayModeToggle').checked = !d.dayMode; });
   socket.on('quickButtonsUpdate', (q) => { quickButtons = q.buttons; save('pc_qb', quickButtons); renderQuickGrid(); renderQbEditor(); });

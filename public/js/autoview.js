@@ -65,26 +65,34 @@ function renderTiming(t){
   }
 }
 
-// Il secondo pulsante (di solito "Rifornimento") sta da solo in una riga
-// grande in alto; gli altri tre stanno sotto, affiancati.
+// Il secondo pulsante (di solito "Rifornimento") sta a destra della barra
+// carburante, nella stessa riga; gli altri tre stanno sotto, affiancati.
 function renderQuickGrid(){
   const grid = $('quickGrid');
   if(!grid) return;
   grid.innerHTML = '';
-  const top = document.createElement('div');
-  top.className = 'quick-row quick-row-top';
-  const bottom = document.createElement('div');
-  bottom.className = 'quick-row quick-row-bottom';
   quickButtons.forEach((b, i) => {
+    if(i === 1) return; // va nel pulsante accanto al carburante, non qui
     const btn = document.createElement('button');
     btn.className = 'quick-btn';
     btn.style.background = b.color;
     btn.textContent = b.label;
     btn.onclick = () => sendQuick(b, btn);
-    (i === 1 ? top : bottom).appendChild(btn);
+    grid.appendChild(btn);
   });
-  grid.appendChild(top);
-  grid.appendChild(bottom);
+  renderRefuelButton();
+}
+
+function renderRefuelButton(){
+  const btn = $('refuelQuickBtn');
+  if(!btn || !quickButtons[1]) return;
+  btn.style.background = quickButtons[1].color;
+  btn.textContent = quickButtons[1].label;
+}
+
+function sendQuickAt(i, btnEl){
+  const b = quickButtons[i];
+  if(b) sendQuick(b, btnEl);
 }
 
 function sendQuick(b, btnEl){
