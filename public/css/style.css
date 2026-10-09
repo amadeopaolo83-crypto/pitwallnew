@@ -104,9 +104,12 @@
   }
 
   .quick-grid{
-    flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;
-    gap:12px;padding:12px 18px 18px;
+    flex:1;display:flex;flex-direction:column;gap:12px;padding:12px 18px 18px;
   }
+  .quick-row{display:flex;gap:12px;}
+  .quick-row-top{flex:0 0 38%;}
+  .quick-row-bottom{flex:1;}
+  .quick-row .quick-btn{flex:1;min-height:0;}
   .quick-btn{
     border-radius:16px;border:2px solid transparent;color:#0B0D0F;
     font-family:'Oswald',sans-serif;font-size:clamp(20px,4vw,34px);text-transform:uppercase;
@@ -209,3 +212,14 @@
   .finish-x-fill{
     position:absolute;left:0;bottom:0;width:0%;height:3px;background:var(--yellow);
   }
+
+  /* Ultimi 15" del conto alla rovescia di partenza: il numero lampeggia rosso. */
+  @keyframes blinkWarn{0%,100%{opacity:1;}50%{opacity:.15;}}
+  .blink-warn{animation:blinkWarn .5s steps(1) infinite;color:var(--red)!important;}
+
+  /* Lampo verde sull'auto nell'istante in cui la gara parte. */
+  .race-start-flash{
+    position:fixed;inset:0;z-index:90;background:var(--green);
+    animation:raceStartFlash .9s ease-out forwards;pointer-events:none;
+  }
+  @keyframes raceStartFlash{0%{opacity:.85;}100%{opacity:0;}}
