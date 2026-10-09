@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=9" />
+<link rel="stylesheet" href="css/style.css?v=10" />
 </head>
 <body>
 
@@ -45,7 +45,7 @@
   <div class="timing-strip" id="timerStartBanner" hidden>
     <div style="text-align:center;width:100%;">
       <div class="lbl">PARTENZA IN</div>
-      <span class="mono" id="timerStartBannerDisplay" style="font-size:28px;font-weight:700;color:var(--yellow);">—</span>
+      <span class="mono" id="timerStartBannerDisplay" style="font-size:56px;font-weight:700;color:var(--yellow);">—</span>
     </div>
   </div>
   <div class="timing-strip" id="timingStrip">
@@ -56,7 +56,7 @@
     </div>
     <div style="text-align:center;">
       <div class="lbl">POSIZIONE</div>
-      <span id="timingPos" style="font-size:20px;font-weight:700;color:var(--text);">—</span>
+      <span id="timingPos" class="pos">—</span>
       <div class="sub" id="timingPosSub"></div>
     </div>
     <div class="side" style="text-align:right;">
@@ -343,16 +343,16 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=9"></script>
-<script src="js/push.js?v=9"></script>
-<script src="js/connection.js?v=9"></script>
-<script src="js/autoview.js?v=9"></script>
-<script src="js/fuel.js?v=9"></script>
-<script src="js/boxview.js?v=9"></script>
-<script src="js/timing.js?v=9"></script>
-<script src="js/race.js?v=9"></script>
-<script src="js/timer.js?v=9"></script>
-<script src="js/install.js?v=9"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/core.js?v=10"></script>
+<script src="js/push.js?v=10"></script>
+<script src="js/connection.js?v=10"></script>
+<script src="js/autoview.js?v=10"></script>
+<script src="js/fuel.js?v=10"></script>
+<script src="js/boxview.js?v=10"></script>
+<script src="js/timing.js?v=10"></script>
+<script src="js/race.js?v=10"></script>
+<script src="js/timer.js?v=10"></script>
+<script src="js/install.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
 </body>
 </html>
