@@ -65,18 +65,26 @@ function renderTiming(t){
   }
 }
 
+// Il secondo pulsante (di solito "Rifornimento") sta da solo in una riga
+// grande in alto; gli altri tre stanno sotto, affiancati.
 function renderQuickGrid(){
   const grid = $('quickGrid');
   if(!grid) return;
   grid.innerHTML = '';
-  quickButtons.forEach(b => {
+  const top = document.createElement('div');
+  top.className = 'quick-row quick-row-top';
+  const bottom = document.createElement('div');
+  bottom.className = 'quick-row quick-row-bottom';
+  quickButtons.forEach((b, i) => {
     const btn = document.createElement('button');
     btn.className = 'quick-btn';
     btn.style.background = b.color;
     btn.textContent = b.label;
     btn.onclick = () => sendQuick(b, btn);
-    grid.appendChild(btn);
+    (i === 1 ? top : bottom).appendChild(btn);
   });
+  grid.appendChild(top);
+  grid.appendChild(bottom);
 }
 
 function sendQuick(b, btnEl){
