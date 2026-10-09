@@ -67,6 +67,30 @@ function getRoomState(code) {
       },
       // Gara avviata/fermata dal box: finche' e' attiva il server si tiene sveglio.
       race: { active: false, startedAt: null },
+      // Doppio timer mostrato sull'auto: "partenza" (countdown fino al via) e
+      // "gara" (countdown della durata di gara, che scatta in automatico a
+      // fine countdown di partenza). Nome diverso da `race` qui sopra, che e'
+      // tutt'altra cosa (il toggle che tiene sveglio il server).
+      // Nessun ticking lato server: ogni client calcola il tempo rimanente da
+      // remaining/updatedAt/running/speed, cosi' tutti i dispositivi restano
+      // sincronizzati senza bisogno di un loop sul server.
+      raceTimer: {
+        phase: "start", // "start" | "race" | "finished"
+        startSeconds: 900,
+        startRemaining: 900,
+        startRunning: false,
+        startUpdatedAt: Date.now(),
+        raceSeconds: 28800,
+        raceRemaining: 28800,
+        raceRunning: false,
+        raceUpdatedAt: Date.now(),
+        speed: 1, // moltiplicatore di velocita' per i test (1 = tempo reale)
+        finishMode: "manual", // "manual" | "auto"
+        finishBackground: "photo", // "photo" | "dark"
+        finishTriggered: false,
+        finishPosition: null,
+        finishDriverName: "",
+      },
       // true finche' nessun dispositivo ha rimandato i propri valori dopo un
       // riavvio del server; si spegne da solo, una voce alla volta.
       fresh: { fuel: true, buttons: true, race: true, ponte: true },

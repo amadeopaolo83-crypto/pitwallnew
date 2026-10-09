@@ -9,6 +9,15 @@ const aub = require("./aub");
 const ponte = require("./ponte");
 const keepalive = require("./keepalive");
 
+// Tempo rimanente "vero" in questo istante, dato l'ultimo valore salvato
+// (baseRemaining), il momento in cui e' stato salvato (updatedAt), se il
+// timer sta scorrendo e a che velocita' (1 = normale, usato per i test).
+function currentRemaining(baseRemaining, updatedAt, running, speed) {
+  if (!running) return baseRemaining;
+  const elapsedSeconds = ((Date.now() - updatedAt) / 1000) * (speed || 1);
+  return Math.max(0, baseRemaining - elapsedSeconds);
+}
+
 function registra(io) {
   // Allo scadere del tempo massimo la gara si chiude da sola e lo dice a tutti.
   const fineAutomatica = (code) => {
@@ -212,6 +221,165 @@ function registra(io) {
       getRoomState(joinedCode).fresh.ponte = false;
       ponte.stop(joinedCode);
       ponte.setStatus(joinedCode, { connected: false, status: "spento", error: null, session: null, flag: null });
+    });
+
+    // ----- TIMER DI PARTENZA (countdown verso il via) -----
+
+    // BOX -> tutti: imposta la durata del countdown di partenza (solo da fermo)
+    socket.on("timerStartSet", ({ seconds } = {}) => {
+      if (!joinedCode || !seconds) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      if (t.startRunning) return;
+      t.startSeconds = seconds;
+      t.startRemaining = seconds;
+      t.startUpdatedAt = Date.now();
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // BOX -> tutti: start / pausa / azzera del timer di partenza
+    socket.on("timerStartControl", ({ action } = {}) => {
+      if (!joinedCode) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      if (t.phase !== "start") return;
+      if (action === "start") {
+        t.startRunning = true;
+        t.startUpdatedAt = Date.now();
+      } else if (action === "pause") {
+        t.startRemaining = currentRemaining(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
+        t.startRunning = false;
+        t.startUpdatedAt = Date.now();
+      } else if (action === "stop") {
+        t.startRunning = false;
+        t.startRemaining = t.startSeconds;
+        t.startUpdatedAt = Date.now();
+      }
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // ----- TIMER DI GARA (countdown della durata di gara) -----
+
+    // BOX -> tutti: imposta/modifica la durata di gara (tipicamente da fermo o
+    // in pausa, per esempio dopo una bandiera rossa che accorcia la gara)
+    socket.on("timerRaceSet", ({ seconds } = {}) => {
+      if (!joinedCode || !seconds) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      if (t.raceRunning) return;
+      t.raceSeconds = seconds;
+      t.raceRemaining = seconds;
+      t.raceUpdatedAt = Date.now();
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // BOX -> tutti: start / pausa / azzera del timer di gara
+    socket.on("timerRaceControl", ({ action } = {}) => {
+      if (!joinedCode) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      if (t.phase !== "race") return;
+      if (action === "start") {
+        t.raceRunning = true;
+        t.raceUpdatedAt = Date.now();
+      } else if (action === "pause") {
+        t.raceRemaining = currentRemaining(t.raceRemaining, t.raceUpdatedAt, t.raceRunning, t.speed);
+        t.raceRunning = false;
+        t.raceUpdatedAt = Date.now();
+      } else if (action === "stop") {
+        t.raceRunning = false;
+        t.raceRemaining = t.raceSeconds;
+        t.raceUpdatedAt = Date.now();
+      }
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // Qualsiasi client (box o auto) segnala che il countdown di partenza e'
+    // arrivato a zero sul proprio orologio locale: il server applica la
+    // transizione partenza -> gara una volta sola (le segnalazioni ripetute
+    // da altri dispositivi nello stesso istante vengono ignorate).
+    socket.on("raceTimerAutoStart", () => {
+      if (!joinedCode) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      if (t.phase !== "start") return;
+      t.phase = "race";
+      t.startRunning = false;
+      t.startRemaining = 0;
+      t.raceRunning = true;
+      t.raceUpdatedAt = Date.now();
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // BOX -> tutti: modalita' test, velocita' accelerata dei timer
+    socket.on("timerTestSpeed", ({ speed } = {}) => {
+      if (!joinedCode || !speed) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      // congela i tempi correnti prima di cambiare velocita', per continuita'
+      t.startRemaining = currentRemaining(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
+      t.startUpdatedAt = Date.now();
+      t.raceRemaining = currentRemaining(t.raceRemaining, t.raceUpdatedAt, t.raceRunning, t.speed);
+      t.raceUpdatedAt = Date.now();
+      t.speed = speed;
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // BOX -> tutti: scorciatoie per saltare subito a un punto del flusso da testare
+    socket.on("timerDebugJump", ({ preset } = {}) => {
+      if (!joinedCode) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      const now = Date.now();
+      switch (preset) {
+        case "start-30s":
+          t.phase = "start"; t.startRemaining = 30; t.startRunning = true; t.startUpdatedAt = now;
+          t.finishTriggered = false;
+          break;
+        case "start-near-zero":
+          t.phase = "start"; t.startRemaining = 3; t.startRunning = true; t.startUpdatedAt = now;
+          t.finishTriggered = false;
+          break;
+        case "race-last-hour":
+          t.phase = "race"; t.raceRemaining = 3600; t.raceRunning = true; t.raceUpdatedAt = now;
+          t.finishTriggered = false;
+          break;
+        case "race-last-15min":
+          t.phase = "race"; t.raceRemaining = 900; t.raceRunning = true; t.raceUpdatedAt = now;
+          t.finishTriggered = false;
+          break;
+        case "race-near-finish":
+          t.phase = "race"; t.raceRemaining = 4; t.raceRunning = true; t.raceUpdatedAt = now;
+          t.finishTriggered = false;
+          break;
+        case "reset":
+          t.phase = "start";
+          t.startRemaining = t.startSeconds; t.startRunning = false; t.startUpdatedAt = now;
+          t.raceRemaining = t.raceSeconds; t.raceRunning = false; t.raceUpdatedAt = now;
+          t.finishTriggered = false; t.finishPosition = null; t.finishDriverName = "";
+          break;
+        default:
+          return;
+      }
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // ----- FINISH -----
+
+    // BOX -> tutti: configura modalita' (manuale/auto), sfondo e nome pilota
+    // senza far comparire subito la schermata (preparazione in anticipo)
+    socket.on("finishConfigUpdate", ({ mode, background, driverName } = {}) => {
+      if (!joinedCode) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      if (mode) t.finishMode = mode;
+      if (background) t.finishBackground = background;
+      if (driverName !== undefined) t.finishDriverName = driverName;
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // BOX (o in automatico a fine timer gara) -> tutti: mostra il Finish
+    socket.on("finishTrigger", ({ position, driverName } = {}) => {
+      if (!joinedCode) return;
+      const state = getRoomState(joinedCode);
+      const t = state.raceTimer;
+      t.phase = "finished";
+      t.finishTriggered = true;
+      t.finishPosition = position != null ? position : (state.timing ? state.timing.position : null);
+      if (driverName) t.finishDriverName = driverName;
+      io.to(joinedCode).emit("timerUpdate", t);
     });
 
     socket.on("disconnect", () => {
