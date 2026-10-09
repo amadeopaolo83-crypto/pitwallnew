@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=8" />
+<link rel="stylesheet" href="css/style.css?v=9" />
 </head>
 <body>
 
@@ -65,9 +65,13 @@
       <div class="who" id="timingWhoBehind"></div>
     </div>
   </div>
-  <div class="fuel-shell">
-    <div class="fuel-label"><span>CARBURANTE</span><span id="fuelPct">100%</span></div>
-    <div class="fuel-track"><div class="fuel-fill" id="fuelFill" style="width:100%;background:#3ECF6E;"></div></div>
+  <div class="fuel-refuel-row">
+    <div class="fuel-shell">
+      <div class="fuel-label"><span>CARBURANTE</span><span id="fuelPct">100%</span></div>
+      <div class="fuel-track"><div class="fuel-fill" id="fuelFill" style="width:100%;background:#3ECF6E;"></div></div>
+      <div class="mono fuel-autonomy" id="autonomyLiveAuto">Autonomia stimata: —</div>
+    </div>
+    <button class="quick-btn refuel-btn" id="refuelQuickBtn" onclick="sendQuickAt(1, this)"></button>
   </div>
   <div class="quick-grid" id="quickGrid"></div>
 </div>
@@ -339,16 +343,16 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=8"></script>
-<script src="js/push.js?v=8"></script>
-<script src="js/connection.js?v=8"></script>
-<script src="js/autoview.js?v=8"></script>
-<script src="js/fuel.js?v=8"></script>
-<script src="js/boxview.js?v=8"></script>
-<script src="js/timing.js?v=8"></script>
-<script src="js/race.js?v=8"></script>
-<script src="js/timer.js?v=8"></script>
-<script src="js/install.js?v=8"></script>
-<script src="js/app.js?v=8"></script>
+<script src="js/core.js?v=9"></script>
+<script src="js/push.js?v=9"></script>
+<script src="js/connection.js?v=9"></script>
+<script src="js/autoview.js?v=9"></script>
+<script src="js/fuel.js?v=9"></script>
+<script src="js/boxview.js?v=9"></script>
+<script src="js/timing.js?v=9"></script>
+<script src="js/race.js?v=9"></script>
+<script src="js/timer.js?v=9"></script>
+<script src="js/install.js?v=9"></script>
+<script src="js/app.js?v=9"></script>
 </body>
 </html>
