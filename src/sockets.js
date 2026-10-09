@@ -38,7 +38,10 @@ function registra(io) {
       socket.data.role = role;
 
       const state = getRoomState(joinedCode);
-      ack && ack({ ok: true, state });
+      // serverNow: l'orologio del telefono puo' essere sbagliato o su un'altra
+      // ora; i timer si calcolano sul tempo del server, non su quello del
+      // dispositivo, cosi' restano giusti e uguali su tutti i telefoni.
+      ack && ack({ ok: true, state, serverNow: Date.now() });
     });
 
     // BOX -> server: registra la sottoscrizione push di questo dispositivo
@@ -350,6 +353,10 @@ function registra(io) {
           t.startRemaining = t.startSeconds; t.startRunning = false; t.startUpdatedAt = now;
           t.raceRemaining = t.raceSeconds; t.raceRunning = false; t.raceUpdatedAt = now;
           t.finishTriggered = false; t.finishPosition = null; t.finishDriverName = "";
+          // Un "reset completo" deve anche togliere la velocita' accelerata di
+          // test: altrimenti resta a x60/x300 e il prossimo conto alla
+          // rovescia scorre piu' in fretta di quanto i minuti/secondi dicano.
+          t.speed = 1;
           break;
         default:
           return;
