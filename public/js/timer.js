@@ -1,18 +1,22 @@
-// Timer di gara: countdown di partenza, countdown di gara, popup periodici
-// sull'auto e schermata Finish. Nessun ticking lato server: ogni client
+// Timer di gara: countdown di partenza, countdown di gara (sempre visibile
+// sull'auto) e schermata Finish. Nessun ticking lato server: ogni client
 // calcola da solo il tempo rimanente a partire da remaining/updatedAt/
 // running/speed (vedi core.js/sockets.js lato server), cosi' tutti i
 // dispositivi restano sincronizzati senza bisogno di un loop sul server.
 
 let lastTimerState = null;
-let prevRaceRemainingForPopup = null;
-let popupActiveUntil = 0;
 let prevTimerPhase = null;
 
 function currentRemainingClient(baseRemaining, updatedAt, running, speed){
   if(!running) return baseRemaining;
   const elapsed = ((nowSync() - updatedAt) / 1000) * (speed || 1);
   return Math.max(0, baseRemaining - elapsed);
+}
+
+function fmtClock(totalSeconds){
+  const s = Math.max(0, Math.round(totalSeconds));
+  const p = n => String(n).padStart(2, '0');
+  return p(Math.floor(s / 3600)) + ':' + p(Math.floor((s % 3600) / 60)) + ':' + p(s % 60);
 }
 
 function fmtHMS(totalSeconds){
@@ -119,7 +123,7 @@ function finishTriggerManual(){
   socket.emit('finishTrigger', { position: pos });
 }
 
-// ---------- AUTO: banner partenza, popup periodici, schermata Finish ----------
+// ---------- AUTO: banner partenza, schermata Finish ----------
 
 function renderTimerAuto(t){
   const banner = $('timerStartBanner');
@@ -147,33 +151,6 @@ function finishClose(){
   socket.emit('timerDebugJump', { preset: 'reset' });
 }
 
-// ---------- popup periodici: ogni ora intera trascorsa, ogni 15' nell'ultima ora ----------
-
-function checkPopup(t, remaining){
-  if(prevRaceRemainingForPopup == null){ prevRaceRemainingForPopup = remaining; return; }
-  const elapsed = t.raceSeconds - remaining;
-  const prevElapsed = t.raceSeconds - prevRaceRemainingForPopup;
-  const sogliePassate = [];
-  for(let h = 3600; h <= t.raceSeconds; h += 3600) sogliePassate.push(h);
-  const soglieRimanenti = [3600, 2700, 1800, 900];
-  const crossedElapsed = sogliePassate.some(s => prevElapsed < s && elapsed >= s);
-  const crossedRemaining = soglieRimanenti.some(s => prevRaceRemainingForPopup > s && remaining <= s);
-  if((crossedElapsed || crossedRemaining) && Date.now() > popupActiveUntil) showTimerPopup(remaining);
-  prevRaceRemainingForPopup = remaining;
-}
-
-function showTimerPopup(remaining){
-  const el = $('timerPopup');
-  if(!el) return;
-  const speed = lastTimerState ? lastTimerState.speed : 1;
-  const durataMs = speed > 1 ? Math.max(400, Math.min(10000, 10000 / speed)) : 10000;
-  popupActiveUntil = Date.now() + durataMs;
-  if($('timerPopupText')) $('timerPopupText').textContent = fmtHMS(remaining) + ' rimanenti';
-  el.hidden = false;
-  clearTimeout(showTimerPopup._t);
-  showTimerPopup._t = setTimeout(() => { el.hidden = true; }, durataMs);
-}
-
 // ---------- ciclo locale: aggiorna i display e segnala il via a fine countdown ----------
 
 setInterval(() => {
@@ -189,7 +166,6 @@ setInterval(() => {
       el.textContent = txt;
       el.classList.toggle('blink-warn', inAllarme);
     });
-    prevRaceRemainingForPopup = null;
     // Qualsiasi dispositivo collegato (box o auto) che vede il proprio
     // orologio a zero segnala il via: il server applica il cambio di fase
     // una volta sola, quindi le segnalazioni ripetute sono innocue.
@@ -197,13 +173,11 @@ setInterval(() => {
   } else if(t.phase === 'race'){
     const rem = currentRemainingClient(t.raceRemaining, t.raceUpdatedAt, t.raceRunning, t.speed);
     if($('timerRaceDisplay')) $('timerRaceDisplay').textContent = fmtHMS(rem);
-    // I promemoria a comparsa (ogni ora, ogni 15' nell'ultima ora) li deve
-    // vedere solo il pilota: sul box restano solo i numeri nella card.
-    if(t.raceRunning && role === 'auto') checkPopup(t, rem);
+    if($('raceClockDisplay')) $('raceClockDisplay').textContent = fmtClock(rem);
     if(t.raceRunning && rem <= 0 && t.finishMode === 'auto' && socket && socket.connected && !t.finishTriggered){
       socket.emit('finishTrigger', {});
     }
-  } else {
-    prevRaceRemainingForPopup = null;
+  } else if($('raceClockDisplay')){
+    $('raceClockDisplay').textContent = '00:00:00';
   }
 }, 250);
