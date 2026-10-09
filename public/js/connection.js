@@ -124,6 +124,7 @@ function applyState(state){
   if(state.aub) renderAubStatus(state.aub);
   if(state.ponte) renderPonteStatus(state.ponte);
   if(state.race) renderRace(state.race);
+  if(state.raceTimer) applyTimerState(state.raceTimer);
   if(role === 'box') mergeHistory(state.messages || []);
   renderQuickGrid();
   renderQbEditor();
@@ -146,6 +147,7 @@ function registerListeners(){
   socket.on('timingViewUpdate', (v) => applyTimingView(v.view));
   socket.on('aubStatus', renderAubStatus);
   socket.on('ponteStatus', renderPonteStatus);
+  socket.on('timerUpdate', applyTimerState);
 }
 
 // Quando la pagina torna visibile (per esempio dopo lo schermo spento) il telefono
