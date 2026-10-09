@@ -8,6 +8,7 @@ let lastTimerState = null;
 let prevRaceRemainingForPopup = null;
 let popupActiveUntil = 0;
 let finishHoldTimer = null;
+let prevTimerPhase = null;
 
 function currentRemainingClient(baseRemaining, updatedAt, running, speed){
   if(!running) return baseRemaining;
@@ -24,9 +25,21 @@ function fmtHMS(totalSeconds){
 // Chiamata da connection.js quando arriva lo stato (al join e a ogni timerUpdate).
 function applyTimerState(t){
   if(!t) return;
+  const partitaOra = prevTimerPhase === 'start' && t.phase === 'race';
+  prevTimerPhase = t.phase;
   lastTimerState = t;
   if(role === 'box') renderTimerBox(t);
-  renderTimerAuto(t);
+  if(role === 'auto') renderTimerAuto(t);
+  // Il lampeggio verde "si parte" si vede solo sull'auto: e' il pilota che
+  // deve accorgersi del cambio, non il box che lo ha appena comandato.
+  if(partitaOra && role === 'auto') flashRacePartita();
+}
+
+function flashRacePartita(){
+  const flash = document.createElement('div');
+  flash.className = 'race-start-flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 900);
 }
 
 // ---------- BOX: card di controllo ----------
@@ -38,8 +51,15 @@ function renderTimerBox(t){
 
   const sInput = $('timerStartInput');
   if(sInput && document.activeElement !== sInput) sInput.value = Math.round(t.startSeconds / 60);
-  const rInput = $('timerRaceInput');
-  if(rInput && document.activeElement !== rInput) rInput.value = (t.raceSeconds / 3600);
+
+  const rH = $('timerRaceH'), rM = $('timerRaceM'), rS = $('timerRaceS');
+  const nessunoInFocus = document.activeElement !== rH && document.activeElement !== rM && document.activeElement !== rS;
+  if(nessunoInFocus){
+    const tot = Math.round(t.raceSeconds);
+    if(rH) rH.value = Math.floor(tot / 3600);
+    if(rM) rM.value = Math.floor((tot % 3600) / 60);
+    if(rS) rS.value = tot % 60;
+  }
 
   if($('timerSpeedLabel')) $('timerSpeedLabel').textContent = 'Velocità test: x' + t.speed;
   [['timerSpeed1', 1], ['timerSpeed60', 60], ['timerSpeed300', 300]].forEach(([id, val]) => {
@@ -63,9 +83,12 @@ function timerStartSet(){
 function timerStartControl(action){ socket.emit('timerStartControl', { action }); }
 
 function timerRaceSet(){
-  const ore = Number($('timerRaceInput').value) || 0;
-  if(ore <= 0) return;
-  socket.emit('timerRaceSet', { seconds: Math.round(ore * 3600) });
+  const h = Number($('timerRaceH').value) || 0;
+  const m = Number($('timerRaceM').value) || 0;
+  const s = Number($('timerRaceS').value) || 0;
+  const totale = Math.round(h * 3600 + m * 60 + s);
+  if(totale <= 0) return;
+  socket.emit('timerRaceSet', { seconds: totale });
 }
 function timerRaceControl(action){ socket.emit('timerRaceControl', { action }); }
 
@@ -156,14 +179,23 @@ setInterval(() => {
   if(t.phase === 'start'){
     const rem = currentRemainingClient(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
     const txt = fmtHMS(rem);
-    if($('timerStartDisplay')) $('timerStartDisplay').textContent = txt;
-    if($('timerStartBannerDisplay')) $('timerStartBannerDisplay').textContent = txt;
+    const inAllarme = t.startRunning && rem <= 15 && rem > 0;
+    [$('timerStartDisplay'), $('timerStartBannerDisplay')].forEach(el => {
+      if(!el) return;
+      el.textContent = txt;
+      el.classList.toggle('blink-warn', inAllarme);
+    });
     prevRaceRemainingForPopup = null;
+    // Qualsiasi dispositivo collegato (box o auto) che vede il proprio
+    // orologio a zero segnala il via: il server applica il cambio di fase
+    // una volta sola, quindi le segnalazioni ripetute sono innocue.
     if(t.startRunning && rem <= 0 && socket && socket.connected) socket.emit('raceTimerAutoStart');
   } else if(t.phase === 'race'){
     const rem = currentRemainingClient(t.raceRemaining, t.raceUpdatedAt, t.raceRunning, t.speed);
     if($('timerRaceDisplay')) $('timerRaceDisplay').textContent = fmtHMS(rem);
-    if(t.raceRunning) checkPopup(t, rem);
+    // I promemoria a comparsa (ogni ora, ogni 15' nell'ultima ora) li deve
+    // vedere solo il pilota: sul box restano solo i numeri nella card.
+    if(t.raceRunning && role === 'auto') checkPopup(t, rem);
     if(t.raceRunning && rem <= 0 && t.finishMode === 'auto' && socket && socket.connected && !t.finishTriggered){
       socket.emit('finishTrigger', {});
     }
