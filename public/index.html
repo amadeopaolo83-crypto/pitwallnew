@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=10" />
+<link rel="stylesheet" href="css/style.css?v=11" />
 </head>
 <body>
 
@@ -89,14 +89,7 @@
     <div class="finish-position" id="finishPositionLabel">—</div>
     <div class="finish-driver" id="finishDriverLabel"></div>
   </div>
-  <div class="finish-x" id="finishXBtn"
-       onpointerdown="finishHoldStart(event)"
-       onpointerup="finishHoldCancel()"
-       onpointerleave="finishHoldCancel()"
-       onpointercancel="finishHoldCancel()">
-    ✕
-    <div class="finish-x-fill" id="finishXFill"></div>
-  </div>
+  <div class="finish-x" id="finishXBtn" onclick="finishClose()">✕</div>
 </div>
 
 <div id="rotateHint" hidden>
@@ -133,9 +126,12 @@
     <div class="row"><span class="mono" id="timerPhaseLabel" style="font-size:12px;">Fase: conto alla rovescia di partenza</span></div>
 
     <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
-      <span class="mono" style="font-size:12px;">Conto alla rovescia di partenza (minuti)</span>
+      <span class="mono" style="font-size:12px;">Conto alla rovescia di partenza (minuti : secondi)</span>
     </div>
-    <div class="row"><input type="number" id="timerStartInput" placeholder="es. 15"></div>
+    <div class="row" style="gap:8px;">
+      <input type="number" id="timerStartM" placeholder="min" min="0" style="text-align:center;">
+      <input type="number" id="timerStartS" placeholder="sec" min="0" max="59" style="text-align:center;">
+    </div>
     <div class="row"><button class="btn small" style="width:100%" onclick="timerStartSet()">Imposta durata partenza</button></div>
     <div class="row"><span class="mono" id="timerStartDisplay" style="font-size:22px;font-weight:700;">—</span></div>
     <div class="row" style="flex-wrap:wrap;gap:8px;">
@@ -343,16 +339,16 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=10"></script>
-<script src="js/push.js?v=10"></script>
-<script src="js/connection.js?v=10"></script>
-<script src="js/autoview.js?v=10"></script>
-<script src="js/fuel.js?v=10"></script>
-<script src="js/boxview.js?v=10"></script>
-<script src="js/timing.js?v=10"></script>
-<script src="js/race.js?v=10"></script>
-<script src="js/timer.js?v=10"></script>
-<script src="js/install.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/core.js?v=11"></script>
+<script src="js/push.js?v=11"></script>
+<script src="js/connection.js?v=11"></script>
+<script src="js/autoview.js?v=11"></script>
+<script src="js/fuel.js?v=11"></script>
+<script src="js/boxview.js?v=11"></script>
+<script src="js/timing.js?v=11"></script>
+<script src="js/race.js?v=11"></script>
+<script src="js/timer.js?v=11"></script>
+<script src="js/install.js?v=11"></script>
+<script src="js/app.js?v=11"></script>
 </body>
 </html>
