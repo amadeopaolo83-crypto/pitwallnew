@@ -77,8 +77,19 @@
     position:fixed;inset:0;display:flex;flex-direction:column;
     background:var(--bg);
   }
-  body.night #autoView{ background:#000; }
-  body.night #autoView .fuel-shell, body.night .quick-btn{ filter:brightness(.8); }
+  /* Modalita' notte (solo pilota): nero vero, testi e colori spenti per non
+     abbagliare. Si ritoccano le variabili colore solo dentro #autoView, cosi'
+     distacchi, tempo gara, carburante e bordi si abbassano insieme. */
+  body.night #autoView{
+    background:#000;
+    --text:#9AA1A7; --muted:#5C646B; --yellow:#B8921A; --red:#B8323C; --green:#2E9A52;
+    --line:#15181B; --panel-2:#0E1013;
+  }
+  body.night #autoView .fuel-shell{ filter:brightness(.7); }
+  body.night #autoView .quick-btn{ filter:brightness(.55) saturate(.85); }
+  body.night #autoView .quick-btn.flashing{ box-shadow:0 0 0 4px rgba(255,255,255,.35) inset; animation:none; }
+  body.night #autoView #changeRoleBtn{ background:#000; border-color:#4a3d0c; color:#6f5c14; box-shadow:none; }
+  body.night #flashOverlay, body.night .race-start-flash, body.night .finish-screen{ filter:brightness(.55); }
 
   /* Le tre fasce (distacchi/partenza, carburante+rifornimento, pulsanti)
      dividono lo schermo in parti uguali: flex:1 ciascuna. */
@@ -98,7 +109,15 @@
   .timing-strip .gap{color:var(--yellow);font-size:clamp(28px,5vw,44px);font-weight:700;}
   .timing-strip .lbl{font-size:13px;letter-spacing:.1em;color:var(--muted);}
   .timing-strip .pos{font-size:clamp(26px,4.5vw,40px);font-weight:700;color:var(--text);}
-  .timing-strip .side{min-width:0;max-width:min(34vw,220px);}
+  .timing-strip .side{min-width:0;max-width:min(20vw,170px);}
+  /* Distacchi a sinistra, tempo gara (ore:minuti:secondi) a destra. */
+  .timing-strip.split{justify-content:space-between;gap:0;}
+  .timing-left{display:flex;align-items:center;gap:clamp(14px,3vw,36px);min-width:0;}
+  .timing-right{
+    text-align:center;padding-left:clamp(12px,2.5vw,28px);border-left:1px solid var(--line);
+    align-self:stretch;display:flex;flex-direction:column;justify-content:center;flex:0 0 auto;
+  }
+  .race-clock{font-size:clamp(30px,6.5vw,54px);font-weight:700;color:var(--text);line-height:1;}
   /* Il nome e' un appoggio, non un dato da leggere in curva: piccolo, spento e
      troncato, perche' una squadra dal nome lungo non deve allargare la striscia
      e spingere fuori schermo il distacco, che invece serve. */
@@ -182,10 +201,6 @@
   .log-item .t{color:var(--muted);}
 
   /* ---------- TIMER / FINISH ---------- */
-  .timer-popup{
-    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-    background:rgba(11,13,15,.92);z-index:55;text-align:center;color:var(--yellow);
-  }
   .finish-screen{
     position:fixed;inset:0;z-index:80;overflow:hidden;background:#0B0D0F;
   }
