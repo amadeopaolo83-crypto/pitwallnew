@@ -80,21 +80,24 @@
   body.night #autoView{ background:#000; }
   body.night #autoView .fuel-shell, body.night .quick-btn{ filter:brightness(.8); }
 
-  .fuel-refuel-row{display:flex;align-items:stretch;gap:10px;padding:14px 18px 6px;}
+  /* Le tre fasce (distacchi/partenza, carburante+rifornimento, pulsanti)
+     dividono lo schermo in parti uguali: flex:1 ciascuna. */
+  .fuel-refuel-row{flex:1;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--line);}
   .fuel-shell{flex:1;}
   .fuel-label{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:6px;}
   .fuel-track{height:26px;border-radius:6px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden;}
   .fuel-fill{height:100%;transition:width .6s ease, background-color .6s ease;}
   .fuel-autonomy{font-size:12px;color:var(--muted);margin-top:6px;}
-  .refuel-btn{flex:0 0 32%;font-size:clamp(14px,2.4vw,19px);}
+  .refuel-btn{flex:0 0 32%;font-size:clamp(14px,2.4vw,19px);align-self:stretch;}
 
   .timing-strip{
-    display:flex;justify-content:center;align-items:center;
-    padding:8px 18px;font-family:'JetBrains Mono',monospace;
+    flex:1;display:flex;justify-content:center;align-items:center;
+    padding:0 18px;font-family:'JetBrains Mono',monospace;
     border-bottom:1px solid var(--line);gap:clamp(20px,6vw,60px);
   }
-  .timing-strip .gap{color:var(--yellow);font-size:16px;font-weight:700;}
-  .timing-strip .lbl{font-size:10px;color:var(--muted);}
+  .timing-strip .gap{color:var(--yellow);font-size:clamp(28px,5vw,44px);font-weight:700;}
+  .timing-strip .lbl{font-size:13px;letter-spacing:.1em;color:var(--muted);}
+  .timing-strip .pos{font-size:clamp(26px,4.5vw,40px);font-weight:700;color:var(--text);}
   .timing-strip .side{min-width:0;max-width:min(34vw,220px);}
   /* Il nome e' un appoggio, non un dato da leggere in curva: piccolo, spento e
      troncato, perche' una squadra dal nome lungo non deve allargare la striscia
@@ -107,7 +110,7 @@
   }
 
   .quick-grid{
-    flex:1;display:flex;gap:12px;padding:12px 18px 18px;
+    flex:1;display:flex;gap:12px;padding:10px 18px;align-items:stretch;
   }
   .quick-grid .quick-btn{flex:1;min-height:0;}
   .quick-btn{
