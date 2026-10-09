@@ -6,6 +6,8 @@
 
 const { Server } = require("socket.io");
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const webpush = require("web-push");
 
 const PORT = process.env.PORT || 3000;
@@ -17,11 +19,56 @@ const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "BDL1U-RB9YWSWMNoB6_u7g
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "1Gzw3jN-k4GS-SYzXWiJqvGH5j4cie9-gVBjvOIL7tI";
 webpush.setVapidDetails("mailto:pitcomm@example.com", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+// Se questo servizio deve servire anche il client (index.html) oltre al
+// backend Socket.io, cerchiamo una cartella "public" o "client" accanto a
+// questo file (in diverse posizioni possibili, a seconda di come è
+// organizzato il repository) e, se la troviamo, la serviamo come sito statico.
+const STATIC_CANDIDATES = [
+  path.join(__dirname, "public"),
+  path.join(__dirname, "client"),
+  path.join(__dirname, "..", "public"),
+  path.join(__dirname, "..", "client"),
+];
+const STATIC_DIR = STATIC_CANDIDATES.find((p) => {
+  try { return fs.existsSync(path.join(p, "index.html")); } catch (e) { return false; }
+});
+if (STATIC_DIR) {
+  console.log("Client statico servito da:", STATIC_DIR);
+} else {
+  console.log("Nessuna cartella public/client con index.html trovata accanto al server: risponderà solo con testo semplice su /.");
+}
+
+const MIME_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json",
+};
+
 const httpServer = http.createServer((req, res) => {
   if (req.url === "/vapid-public-key") {
     res.writeHead(200, { "Content-Type": "text/plain" });
     return res.end(VAPID_PUBLIC_KEY);
   }
+
+  if (STATIC_DIR) {
+    let urlPath = req.url.split("?")[0];
+    if (urlPath === "/") urlPath = "/index.html";
+    const filePath = path.join(STATIC_DIR, decodeURIComponent(urlPath));
+    // evita di uscire dalla cartella statica (sicurezza path traversal)
+    if (filePath.startsWith(STATIC_DIR) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath).toLowerCase();
+      res.writeHead(200, { "Content-Type": MIME_TYPES[ext] || "application/octet-stream" });
+      return fs.createReadStream(filePath).pipe(res);
+    }
+  }
+
   res.writeHead(200, { "Content-Type": "text/plain" });
   res.end("PitComm server attivo\n");
 });
