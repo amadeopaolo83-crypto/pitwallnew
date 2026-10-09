@@ -205,24 +205,29 @@
     position:absolute;left:0;right:0;bottom:8%;text-align:center;color:#fff;
   }
   .finish-position{font-family:'Oswald',sans-serif;font-size:clamp(40px,10vw,100px);font-weight:700;letter-spacing:.04em;color:var(--yellow);text-transform:uppercase;}
-  .finish-driver{font-family:'Inter',sans-serif;font-size:clamp(16px,3vw,26px);color:#fff;margin-top:6px;}
+  .finish-driver{font-family:'Inter',sans-serif;font-weight:600;font-size:clamp(24px,5vw,42px);color:#fff;margin-top:10px;}
   .finish-x{
-    position:absolute;top:24px;right:24px;width:48px;height:48px;border-radius:50%;
-    background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;
-    font-size:22px;border:2px solid rgba(255,255,255,.4);overflow:hidden;z-index:2;
-    -webkit-user-select:none;user-select:none;touch-action:none;
+    position:absolute;top:20px;right:20px;width:52px;height:52px;border-radius:50%;
+    background:rgba(0,0,0,.55);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:24px;border:2px solid rgba(255,255,255,.45);z-index:2;
+    -webkit-user-select:none;user-select:none;cursor:pointer;
   }
-  .finish-x-fill{
-    position:absolute;left:0;bottom:0;width:0%;height:3px;background:var(--yellow);
-  }
+  .finish-x:active{transform:scale(.92);}
 
   /* Ultimi 15" del conto alla rovescia di partenza: il numero lampeggia rosso. */
   @keyframes blinkWarn{0%,100%{opacity:1;}50%{opacity:.15;}}
   .blink-warn{animation:blinkWarn .5s steps(1) infinite;color:var(--red)!important;}
 
-  /* Lampo verde sull'auto nell'istante in cui la gara parte. */
+  /* Lampo verde con scritta "VIA!" sull'auto nell'istante in cui la gara parte. */
   .race-start-flash{
     position:fixed;inset:0;z-index:90;background:var(--green);
-    animation:raceStartFlash .9s ease-out forwards;pointer-events:none;
+    display:flex;align-items:center;justify-content:center;
+    animation:raceStartFlash 1.4s ease-out forwards;pointer-events:none;
   }
-  @keyframes raceStartFlash{0%{opacity:.85;}100%{opacity:0;}}
+  .race-start-flash span{
+    font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.06em;
+    font-size:clamp(48px,14vw,140px);font-weight:700;color:#0B0D0F;
+    animation:raceStartText 1.4s ease-out forwards;
+  }
+  @keyframes raceStartFlash{0%{opacity:1;}60%{opacity:1;}100%{opacity:0;}}
+  @keyframes raceStartText{0%{transform:scale(.7);opacity:0;}20%{transform:scale(1);opacity:1;}70%{opacity:1;}100%{opacity:0;}}
