@@ -229,8 +229,10 @@ function registra(io) {
     // ----- TIMER DI PARTENZA (countdown verso il via) -----
 
     // BOX -> tutti: imposta la durata del countdown di partenza (solo da fermo)
+    // La partenza puo' essere 0: in quel caso "Avvia" fa partire subito solo il
+    // timer di gara (vedi timerControl).
     socket.on("timerStartSet", ({ seconds } = {}) => {
-      if (!joinedCode || !seconds) return;
+      if (!joinedCode || typeof seconds !== "number" || !(seconds >= 0)) return;
       const t = getRoomState(joinedCode).raceTimer;
       if (t.startRunning) return;
       t.startSeconds = seconds;
@@ -256,6 +258,52 @@ function registra(io) {
         t.startRemaining = t.startSeconds;
         t.startUpdatedAt = Date.now();
       }
+      io.to(joinedCode).emit("timerUpdate", t);
+    });
+
+    // ----- COMANDI GENERALI: avvia / pausa / azzera valgono per tutta la sequenza -----
+    // Partenza > 0: parte il conto alla rovescia, a zero parte da solo quello
+    // di gara. Partenza a 0: "Avvia" fa partire subito solo il timer di gara.
+    socket.on("timerControl", ({ action } = {}) => {
+      if (!joinedCode) return;
+      const t = getRoomState(joinedCode).raceTimer;
+      const now = Date.now();
+      if (action === "start") {
+        if (t.phase === "start") {
+          if (t.startRunning) return; // gia' in corso: non succede nulla
+          const startRem = currentRemaining(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
+          if (startRem <= 0) {
+            t.phase = "race";
+            t.startRunning = false;
+            t.startRemaining = 0;
+            t.raceRunning = true;
+            t.raceUpdatedAt = now;
+          } else {
+            t.startRunning = true;
+            t.startUpdatedAt = now;
+          }
+        } else if (t.phase === "race") {
+          if (t.raceRunning || t.raceRemaining <= 0) return; // gia' in corso: non succede nulla
+          t.raceRunning = true;
+          t.raceUpdatedAt = now;
+        } else return;
+      } else if (action === "pause") {
+        if (t.phase === "start" && t.startRunning) {
+          t.startRemaining = currentRemaining(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
+          t.startRunning = false;
+          t.startUpdatedAt = now;
+        } else if (t.phase === "race" && t.raceRunning) {
+          t.raceRemaining = currentRemaining(t.raceRemaining, t.raceUpdatedAt, t.raceRunning, t.speed);
+          t.raceRunning = false;
+          t.raceUpdatedAt = now;
+        } else return;
+      } else if (action === "stop") {
+        // Azzera: tutto torna ai valori impostati (non li cancella).
+        t.phase = "start";
+        t.startRunning = false; t.startRemaining = t.startSeconds; t.startUpdatedAt = now;
+        t.raceRunning = false; t.raceRemaining = t.raceSeconds; t.raceUpdatedAt = now;
+        t.finishTriggered = false; t.finishPosition = null;
+      } else return;
       io.to(joinedCode).emit("timerUpdate", t);
     });
 
