@@ -99,11 +99,14 @@ function renderTimerBox(t){
 function timerStartSet(){
   const m = Number($('timerStartM').value) || 0;
   const s = Number($('timerStartS').value) || 0;
+  // Campi entrambi vuoti = nessuna scelta; 0 e 0 scritti = partenza a zero.
+  if($('timerStartM').value === '' && $('timerStartS').value === '') return;
   const totale = Math.round(m * 60 + s);
-  if(totale <= 0) return;
+  if(totale < 0) return;
   socket.emit('timerStartSet', { seconds: totale });
 }
-function timerStartControl(action){ socket.emit('timerStartControl', { action }); }
+// Comandi generali: valgono per partenza e gara insieme (decide il server).
+function timerControl(action){ socket.emit('timerControl', { action }); }
 
 function timerRaceSet(){
   const h = Number($('timerRaceH').value) || 0;
@@ -113,7 +116,6 @@ function timerRaceSet(){
   if(totale <= 0) return;
   socket.emit('timerRaceSet', { seconds: totale });
 }
-function timerRaceControl(action){ socket.emit('timerRaceControl', { action }); }
 
 function timerSetSpeed(speed){ socket.emit('timerTestSpeed', { speed }); }
 function timerDebugJump(preset){ socket.emit('timerDebugJump', { preset }); }
@@ -134,8 +136,11 @@ function renderTimerAuto(t){
   const banner = $('timerStartBanner');
   const strip = $('timingStrip');
   const inStart = t.phase === 'start';
-  if(banner) banner.hidden = !inStart;
-  if(strip) strip.hidden = inStart;
+  // Con la partenza a zero non c'e' nulla da contare: si vede subito la
+  // striscia con i distacchi e il tempo gara.
+  const conPartenza = inStart && t.startSeconds > 0;
+  if(banner) banner.hidden = !conPartenza;
+  if(strip) strip.hidden = conPartenza;
   renderFinishScreen(t);
 }
 
@@ -171,6 +176,8 @@ setInterval(() => {
       el.textContent = txt;
       el.classList.toggle('blink-warn', inAllarme);
     });
+    // Prima del via il tempo gara mostra la durata impostata, ferma.
+    if($('raceClockDisplay')) $('raceClockDisplay').textContent = fmtClock(t.raceRemaining);
     // Qualsiasi dispositivo collegato (box o auto) che vede il proprio
     // orologio a zero segnala il via: il server applica il cambio di fase
     // una volta sola, quindi le segnalazioni ripetute sono innocue.
