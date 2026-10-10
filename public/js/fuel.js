@@ -9,7 +9,10 @@ function saveFuelLocal(){
 
 function renderFuelSystemUI(){
   const fs = fuelSystem;
-  if($('tankCapacityInput')) $('tankCapacityInput').value = fs.tankCapacityLiters;
+  // I campi che si stanno modificando non vanno riscritti dall'aggiornamento
+  // periodico (ogni 3 s con la vettura in pista), altrimenti non si riesce a digitare.
+  const inUso = el => el && document.activeElement === el;
+  if($('tankCapacityInput') && !inUso($('tankCapacityInput'))) $('tankCapacityInput').value = fs.tankCapacityLiters;
   if($('trackStatusLabel')) $('trackStatusLabel').textContent = 'Stato: ' + (fs.onTrack ? 'in pista' : 'ai box');
   // I due pulsanti mostrano lo stato attuale: si accende quello attivo.
   if($('btnOnTrack')){
@@ -23,7 +26,7 @@ function renderFuelSystemUI(){
   if($('rateLabel')) $('rateLabel').textContent = fs.consumptionRatePerHour
     ? 'Consumo stimato: ' + fs.consumptionRatePerHour.toFixed(1) + ' L/ora'
     : 'Consumo stimato: non ancora impostato';
-  if($('knownRateLph') && fs.consumptionRatePerHour) $('knownRateLph').value = fs.consumptionRatePerHour.toFixed(1);
+  if($('knownRateLph') && !inUso($('knownRateLph')) && fs.consumptionRatePerHour) $('knownRateLph').value = fs.consumptionRatePerHour.toFixed(1);
   const liveLiters = computeLiveLiters();
   if($('litersNowLabel')) $('litersNowLabel').textContent = 'Litri in serbatoio: ' + liveLiters.toFixed(1) + ' / ' + fs.tankCapacityLiters + ' L';
   const pct = fs.tankCapacityLiters > 0 ? Math.round((liveLiters / fs.tankCapacityLiters) * 100) : 0;
@@ -71,8 +74,14 @@ function tickFuelSystem(){
   const pct = fuelSystem.tankCapacityLiters > 0 ? Math.round((liveLiters / fuelSystem.tankCapacityLiters) * 100) : 0;
   const autonomyMin = fuelSystem.consumptionRatePerHour ? Math.round((liveLiters / fuelSystem.consumptionRatePerHour) * 60) : null;
   renderFuelSystemUI();
-  socket.emit('fuelUpdate', { percent: pct });
-  socket.emit('autonomyUpdate', { minutes: autonomyMin });
+  renderFuel(pct);
+  // Ogni dispositivo calcola e mostra il proprio valore (stesso orologio di
+  // server, stessi dati). Solo il box lo pubblica sul server, per chi entra
+  // dopo: se lo facessero tutti, i valori si sovrascriverebbero a vicenda.
+  if(role === 'box'){
+    socket.emit('fuelUpdate', { percent: pct });
+    socket.emit('autonomyUpdate', { minutes: autonomyMin });
+  }
   if(liveLiters <= 0){
     fuelSystem.currentLiters = 0;
     fuelSystem.onTrack = false;

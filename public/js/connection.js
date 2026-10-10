@@ -138,8 +138,9 @@ function registerListeners(){
   socket.on('quickMessageReceived', (m) => addLog(m));
   socket.on('historyCleared', clearHistoryLocal);
   socket.on('flashMessage', (m) => { if(role==='auto') showFlash(m); });
-  socket.on('fuelUpdate', (f) => { renderFuel(f.percent); if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: '+f.percent+'%'; });
+  socket.on('fuelUpdate', (f) => { if(fuelTickInterval) return; renderFuel(f.percent); if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: '+f.percent+'%'; });
   socket.on('autonomyUpdate', (a) => {
+    if(fuelTickInterval) return; // il conteggio locale e' la fonte, non il valore degli altri
     const txt = 'Autonomia stimata: '+(a.minutes==null?'—':a.minutes+' min');
     if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = txt;
     if($('autonomyLiveAuto')) $('autonomyLiveAuto').textContent = txt;

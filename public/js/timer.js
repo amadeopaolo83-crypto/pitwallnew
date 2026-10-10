@@ -34,7 +34,12 @@ function applyTimerState(t){
   // Il carburante segue la stessa velocita' di test del timer: se e' appena
   // cambiata, si congela il consumo fatto con quella vecchia prima di
   // passare alla nuova (altrimenti i litri farebbero un salto).
-  if(t.speed !== oldSpeed && typeof rebaseFuelSpeed === 'function') rebaseFuelSpeed(oldSpeed);
+  if(t.speed !== oldSpeed && typeof rebaseFuelSpeed === 'function'){
+    rebaseFuelSpeed(oldSpeed);
+    // Il box ripubblica il carburante ricalcolato, cosi' tutti ripartono dagli
+    // stessi valori (anche chi si collega dopo il cambio di velocita').
+    if(role === 'box' && fuelSystem.onTrack) syncFuelSystem();
+  }
   lastTimerState = t;
   if(role === 'box') renderTimerBox(t);
   if(role === 'auto') renderTimerAuto(t);

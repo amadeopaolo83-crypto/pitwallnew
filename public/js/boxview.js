@@ -1,8 +1,21 @@
 // Vista box: pannello di controllo. Pulsanti rapidi, messaggi a schermo intero
 // e cronologia di quello che arriva dall'auto.
 
+// Schede del box: Gara / Timing / Impostazioni. Si ricorda l'ultima aperta.
+function setBoxTab(name){
+  ['gara', 'timing', 'settings'].forEach(n => {
+    const pane = $('boxTab_' + n), btn = $('boxTabBtn_' + n);
+    if(pane) pane.hidden = n !== name;
+    if(btn) btn.classList.toggle('on', n === name);
+  });
+  try{ localStorage.setItem('pc_box_tab', name); }catch(e){}
+}
+
 function enterBoxView(){
   $('boxView').hidden = false;
+  let tab = 'gara';
+  try{ tab = localStorage.getItem('pc_box_tab') || 'gara'; }catch(e){}
+  setBoxTab(['gara', 'timing', 'settings'].includes(tab) ? tab : 'gara');
   $('boxCodePill').textContent = code;
   // Numero di gara, indirizzo e utente si ricordano; la password no, si
   // riscrive (o meglio: sta nelle variabili d'ambiente del server).
