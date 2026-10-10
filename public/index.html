@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=15" />
+<link rel="stylesheet" href="css/style.css?v=17" />
 </head>
 <body>
 
@@ -50,21 +50,21 @@
   </div>
   <div class="timing-strip split" id="timingStrip">
     <div class="timing-left">
-    <div class="side" style="text-align:left;">
-      <div class="lbl">DAVANTI</div>
-      <span class="gap" id="timingGapAhead">—</span>
-      <div class="who" id="timingWhoAhead"></div>
-    </div>
-    <div style="text-align:center;">
-      <div class="lbl">POSIZIONE</div>
-      <span id="timingPos" class="pos">—</span>
-      <div class="sub" id="timingPosSub"></div>
-    </div>
-    <div class="side" style="text-align:right;">
-      <div class="lbl">DIETRO</div>
-      <span class="gap" id="timingGapBehind">—</span>
-      <div class="who" id="timingWhoBehind"></div>
-    </div>
+      <div class="cell side">
+        <div class="lbl">DAVANTI</div>
+        <span class="gap" id="timingGapAhead">—</span>
+        <div class="who" id="timingWhoAhead"></div>
+      </div>
+      <div class="cell">
+        <div class="lbl">POSIZIONE</div>
+        <span id="timingPos" class="pos">—</span>
+        <div class="sub" id="timingPosSub"></div>
+      </div>
+      <div class="cell side">
+        <div class="lbl">DIETRO</div>
+        <span class="gap" id="timingGapBehind">—</span>
+        <div class="who" id="timingWhoBehind"></div>
+      </div>
     </div>
     <div class="timing-right">
       <div class="lbl">TEMPO GARA</div>
@@ -106,22 +106,46 @@
     <span class="code-pill" id="boxCodePill">—</span>
   </div>
   <button id="changeRoleBtn" onclick="resetRole()">◄ cambia ruolo / codice</button>
+  <div class="tabs box-tabs" id="boxTabs">
+    <button class="tab on" id="boxTabBtn_gara" onclick="setBoxTab('gara')">Gara</button>
+    <button class="tab" id="boxTabBtn_timing" onclick="setBoxTab('timing')">Timing</button>
+    <button class="tab" id="boxTabBtn_settings" onclick="setBoxTab('settings')">Impostazioni</button>
+  </div>
+  <div class="box-tab" id="boxTab_gara">
   <div class="card">
     <h3>Messaggi ricevuti dall'auto</h3>
     <div id="log"></div>
     <button class="btn small" style="margin-top:10px;" onclick="clearLog()">Cancella cronologia</button>
   </div>
-
-  <!-- Gara: finche' e' avviata il server si tiene sveglio da solo -->
+  <!-- 1. Carburante e stato in pista / ai box -->
   <div class="card">
-    <h3>Gara</h3>
-    <div class="row"><span class="mono" id="raceStatusLabel" style="font-size:12px;">Gara ferma · il server può spegnersi se nessuno lo usa</span></div>
+    <h3>Carburante &amp; autonomia</h3>
+    <div class="row"><span class="mono" id="fuelValLabel">Livello: 100%</span></div>
+    <div class="row"><span class="mono" id="litersNowLabel" style="font-size:12px;">Litri in serbatoio: —</span></div>
+    <div class="row"><span class="mono" id="autonomyLiveLabel" style="font-size:12px;">Autonomia stimata: —</span></div>
+
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" id="trackStatusLabel">Stato: ai box</span>
+    </div>
     <div class="row" style="flex-wrap:wrap;gap:8px;">
-      <button class="btn state-btn green" id="btnRaceStart" onclick="startRace()">Avvio gara</button>
-      <button class="btn state-btn red" id="btnRaceStop" onclick="stopRace()">Fine gara</button>
+      <button class="btn state-btn green" id="btnOnTrack" onclick="setOnTrack(true)">In pista</button>
+      <button class="btn state-btn orange" id="btnAtBox" onclick="setOnTrack(false)">Ai box</button>
     </div>
   </div>
-
+  <!-- 2. Messaggi a schermo intero -->
+  <div class="card">
+    <h3>Messaggi a schermo intero</h3>
+    <div id="flashEditor"></div>
+    <button class="btn small" onclick="addFlashPreset()">+ aggiungi preset</button>
+  </div>
+  <!-- Rifornimento: litri appena riforniti -->
+  <div class="card">
+    <h3>Rifornimento</h3>
+    <div class="row"><input type="number" id="refuelLitersInput" placeholder="Litri appena riforniti"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="doRefuel()">Rifornisci</button></div>
+  </div>
+  </div>
+  <div class="box-tab" id="boxTab_timing" hidden>
   <!-- Timer di partenza e di gara mostrati sull'auto, + modalita' test accelerato -->
   <div class="card">
     <h3>Timer gara</h3>
@@ -173,87 +197,6 @@
       <button class="btn small" onclick="timerDebugJump('reset')">Reset completo</button>
     </div>
   </div>
-
-  <div class="card">
-    <h3>Finish</h3>
-    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Attivazione:</span></div>
-    <div class="row seg">
-      <button class="btn seg-btn" id="finishModeManual" onclick="finishSetMode('manual')">Manuale</button>
-      <button class="btn seg-btn" id="finishModeAuto" onclick="finishSetMode('auto')">Automatica</button>
-    </div>
-    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Sfondo:</span></div>
-    <div class="row seg">
-      <button class="btn seg-btn" id="finishBgPhoto" onclick="finishSetBackground('photo')">Foto squadra</button>
-      <button class="btn seg-btn" id="finishBgDark" onclick="finishSetBackground('dark')">Scuro</button>
-    </div>
-    <div class="row"><input type="text" id="finishDriverInput" placeholder="Nome pilota" oninput="finishDriverNameChanged()"></div>
-    <div class="row"><input type="number" id="finishPositionInput" placeholder="Posizione (vuoto = dai distacchi)"></div>
-    <div class="row"><button class="btn primary" style="width:100%" onclick="finishTriggerManual()">Mostra schermata Finish</button></div>
-  </div>
-
-  <!-- 1. Carburante e stato in pista / ai box -->
-  <div class="card">
-    <h3>Carburante &amp; autonomia</h3>
-    <div class="row"><span class="mono" id="fuelValLabel">Livello: 100%</span></div>
-    <div class="row"><span class="mono" id="litersNowLabel" style="font-size:12px;">Litri in serbatoio: —</span></div>
-    <div class="row"><span class="mono" id="autonomyLiveLabel" style="font-size:12px;">Autonomia stimata: —</span></div>
-
-    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
-      <span class="mono" id="trackStatusLabel">Stato: ai box</span>
-    </div>
-    <div class="row" style="flex-wrap:wrap;gap:8px;">
-      <button class="btn state-btn green" id="btnOnTrack" onclick="setOnTrack(true)">In pista</button>
-      <button class="btn state-btn orange" id="btnAtBox" onclick="setOnTrack(false)">Ai box</button>
-    </div>
-  </div>
-
-  <!-- 2. Messaggi a schermo intero -->
-  <div class="card">
-    <h3>Messaggi a schermo intero</h3>
-    <div id="flashEditor"></div>
-    <button class="btn small" onclick="addFlashPreset()">+ aggiungi preset</button>
-  </div>
-
-  <!-- 3. Capienza, livello di partenza, rifornimento -->
-  <div class="card">
-    <h3>Serbatoio</h3>
-    <div class="row">
-      <span class="mono" style="font-size:12px;">Capienza serbatoio (L)</span>
-    </div>
-    <div class="row"><input type="number" id="tankCapacityInput" placeholder="es. 100"></div>
-    <div class="row"><button class="btn small" style="width:100%" onclick="setTankCapacity()">Imposta capienza</button></div>
-
-    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
-      <span class="mono" style="font-size:12px;">Livello di partenza (se non è pieno)</span>
-    </div>
-    <div class="row"><input type="number" id="startingLitersInput" placeholder="Litri attualmente presenti"></div>
-    <div class="row"><button class="btn small" style="width:100%" onclick="setStartingLiters()">Imposta livello attuale</button></div>
-
-    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
-      <span class="mono" style="font-size:12px;">Rifornimento</span>
-    </div>
-    <div class="row"><input type="number" id="refuelLitersInput" placeholder="Litri appena riforniti"></div>
-    <div class="row"><button class="btn small" style="width:100%" onclick="doRefuel()">Rifornisci</button></div>
-  </div>
-
-  <!-- 4. Schermo auto -->
-  <div class="card">
-    <h3>Schermo auto</h3>
-    <div class="row"><span>Modalità notte</span>
-      <label class="toggle"><input type="checkbox" id="dayModeToggle" onchange="sendDayMode()"><span class="knob"></span></label>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Consumo</h3>
-    <div class="row">
-      <span class="mono" id="rateLabel" style="font-size:12px;">Consumo stimato: non ancora impostato</span>
-    </div>
-    <div class="row"><input type="number" id="knownRateLph" placeholder="Consumo (L/ora)" step="0.1"></div>
-    <div class="row"><button class="btn small" style="width:100%" onclick="setKnownRate()">Imposta consumo</button></div>
-    <div class="row"><button class="btn small" style="width:100%" onclick="markDryAndCalibrate()">Calibra: serbatoio a secco ora</button></div>
-  </div>
-
   <div class="card">
     <h3>Distacchi</h3>
     <div class="row seg" id="timingSourceSeg">
@@ -308,13 +251,60 @@
       <div class="row"><button class="btn primary" style="width:100%" onclick="sendTiming(this)">Invia distacchi all'auto</button></div>
     </div>
   </div>
+  <div class="card">
+    <h3>Finish</h3>
+    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Attivazione:</span></div>
+    <div class="row seg">
+      <button class="btn seg-btn" id="finishModeManual" onclick="finishSetMode('manual')">Manuale</button>
+      <button class="btn seg-btn" id="finishModeAuto" onclick="finishSetMode('auto')">Automatica</button>
+    </div>
+    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Sfondo:</span></div>
+    <div class="row seg">
+      <button class="btn seg-btn" id="finishBgPhoto" onclick="finishSetBackground('photo')">Foto squadra</button>
+      <button class="btn seg-btn" id="finishBgDark" onclick="finishSetBackground('dark')">Scuro</button>
+    </div>
+    <div class="row"><input type="text" id="finishDriverInput" placeholder="Nome pilota" oninput="finishDriverNameChanged()"></div>
+    <div class="row"><input type="number" id="finishPositionInput" placeholder="Posizione (vuoto = dai distacchi)"></div>
+    <div class="row"><button class="btn primary" style="width:100%" onclick="finishTriggerManual()">Mostra schermata Finish</button></div>
+  </div>
+  </div>
+  <div class="box-tab" id="boxTab_settings" hidden>
+  <!-- 3. Capienza, livello di partenza, rifornimento -->
+  <div class="card">
+    <h3>Serbatoio</h3>
+    <div class="row">
+      <span class="mono" style="font-size:12px;">Capienza serbatoio (L)</span>
+    </div>
+    <div class="row"><input type="number" id="tankCapacityInput" placeholder="es. 100"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="setTankCapacity()">Imposta capienza</button></div>
 
+    <div class="row" style="border-top:1px solid var(--line);padding-top:12px;">
+      <span class="mono" style="font-size:12px;">Livello di partenza (se non è pieno)</span>
+    </div>
+    <div class="row"><input type="number" id="startingLitersInput" placeholder="Litri attualmente presenti"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="setStartingLiters()">Imposta livello attuale</button></div>
+  </div>
+  <div class="card">
+    <h3>Consumo</h3>
+    <div class="row">
+      <span class="mono" id="rateLabel" style="font-size:12px;">Consumo stimato: non ancora impostato</span>
+    </div>
+    <div class="row"><input type="number" id="knownRateLph" placeholder="Consumo (L/ora)" step="0.1"></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="setKnownRate()">Imposta consumo</button></div>
+    <div class="row"><button class="btn small" style="width:100%" onclick="markDryAndCalibrate()">Calibra: serbatoio a secco ora</button></div>
+  </div>
   <div class="card">
     <h3>Pulsanti rapidi auto (4)</h3>
     <div id="qbEditor"></div>
     <button class="btn" onclick="saveQuickButtons()">Salva pulsanti</button>
   </div>
-
+  <!-- 4. Schermo auto -->
+  <div class="card">
+    <h3>Schermo auto</h3>
+    <div class="row"><span>Modalità notte</span>
+      <label class="toggle"><input type="checkbox" id="dayModeToggle" onchange="sendDayMode()"><span class="knob"></span></label>
+    </div>
+  </div>
   <div class="card">
     <h3>Allarme messaggi</h3>
     <div class="row"><span>Sirena quando arriva un messaggio</span>
@@ -330,10 +320,19 @@
     <div class="row"><span class="mono" id="awakeStatus" style="font-size:11px;color:var(--muted);">Spento: lo schermo si spegne come al solito.</span></div>
     <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">La sirena suona solo con l'app aperta. A schermo spento arriva la notifica del telefono, con il suono scelto nelle sue impostazioni. Tocca "Prova la sirena" dopo aver aperto l'app: serve a sbloccare l'audio del browser.</span></div>
   </div>
-
   <div class="card">
     <h3>Notifiche</h3>
     <span class="mono" id="pushStatus" style="font-size:12px;color:var(--muted);">In attivazione…</span>
+  </div>
+  <!-- Gara: finche' e' avviata il server si tiene sveglio da solo -->
+  <div class="card">
+    <h3>Gara</h3>
+    <div class="row"><span class="mono" id="raceStatusLabel" style="font-size:12px;">Gara ferma · il server può spegnersi se nessuno lo usa</span></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px;">
+      <button class="btn state-btn green" id="btnRaceStart" onclick="startRace()">Avvio gara</button>
+      <button class="btn state-btn red" id="btnRaceStop" onclick="stopRace()">Fine gara</button>
+    </div>
+  </div>
   </div>
 </div>
 
@@ -341,16 +340,16 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=15"></script>
-<script src="js/push.js?v=15"></script>
-<script src="js/connection.js?v=15"></script>
-<script src="js/autoview.js?v=15"></script>
-<script src="js/fuel.js?v=15"></script>
-<script src="js/boxview.js?v=15"></script>
-<script src="js/timing.js?v=15"></script>
-<script src="js/race.js?v=15"></script>
-<script src="js/timer.js?v=15"></script>
-<script src="js/install.js?v=15"></script>
-<script src="js/app.js?v=15"></script>
+<script src="js/core.js?v=17"></script>
+<script src="js/push.js?v=17"></script>
+<script src="js/connection.js?v=17"></script>
+<script src="js/autoview.js?v=17"></script>
+<script src="js/fuel.js?v=17"></script>
+<script src="js/boxview.js?v=17"></script>
+<script src="js/timing.js?v=17"></script>
+<script src="js/race.js?v=17"></script>
+<script src="js/timer.js?v=17"></script>
+<script src="js/install.js?v=17"></script>
+<script src="js/app.js?v=17"></script>
 </body>
 </html>
