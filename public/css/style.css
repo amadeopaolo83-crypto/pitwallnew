@@ -72,6 +72,8 @@
     border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;
     font-family:'Inter',sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.5);
   }
+  /* Sull'auto il pulsante e' piccolo, per non coprire le etichette dei distacchi. */
+  #autoView #changeRoleBtn{ top:4px;left:4px;padding:4px 8px;font-size:11px;border-width:1px; }
   #boxView #changeRoleBtn{ position:static;display:inline-block;margin-bottom:14px; }
   #autoView{
     position:fixed;inset:0;display:flex;flex-direction:column;
@@ -106,13 +108,16 @@
     padding:0 18px;font-family:'JetBrains Mono',monospace;
     border-bottom:1px solid var(--line);gap:clamp(20px,6vw,60px);
   }
-  .timing-strip .gap{color:var(--yellow);font-size:clamp(28px,5vw,44px);font-weight:700;}
+  .timing-strip .gap, .timing-strip .pos{font-size:clamp(28px,5vw,44px);font-weight:700;line-height:1;height:1.15em;display:flex;align-items:center;justify-content:center;}
+  .timing-strip .gap{color:var(--yellow);}
   .timing-strip .lbl{font-size:13px;letter-spacing:.1em;color:var(--muted);}
-  .timing-strip .pos{font-size:clamp(26px,4.5vw,40px);font-weight:700;color:var(--text);}
-  .timing-strip .side{min-width:0;max-width:min(20vw,170px);}
+  .timing-strip .pos{color:var(--text);}
+  .timing-strip .cell{min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .timing-strip .cell .lbl{height:16px;line-height:16px;white-space:nowrap;}
+  .timing-strip .cell .who, .timing-strip .cell .sub{min-height:14px;text-align:center;}
   /* Distacchi a sinistra, tempo gara (ore:minuti:secondi) a destra. */
   .timing-strip.split{justify-content:space-between;gap:0;}
-  .timing-left{display:flex;align-items:center;gap:clamp(14px,3vw,36px);min-width:0;}
+  .timing-left{display:grid;grid-template-columns:repeat(3,1fr);align-items:start;flex:1;min-width:0;max-width:640px;}
   .timing-right{
     text-align:center;padding-left:clamp(12px,2.5vw,28px);border-left:1px solid var(--line);
     align-self:stretch;display:flex;flex-direction:column;justify-content:center;flex:0 0 auto;
@@ -246,3 +251,11 @@
   }
   @keyframes raceStartFlash{0%{opacity:1;}60%{opacity:1;}100%{opacity:0;}}
   @keyframes raceStartText{0%{transform:scale(.7);opacity:0;}20%{transform:scale(1);opacity:1;}70%{opacity:1;}100%{opacity:0;}}
+
+  /* ---------- BOX: tre schede (Gara / Timing / Impostazioni) ---------- */
+  .box-tabs{display:flex;margin-bottom:14px;position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0;}
+  .box-tabs .tab{flex:1;text-align:center;padding:12px 0;font-size:14px;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);font-family:'Inter',sans-serif;}
+  .box-tabs .tab:first-child{border-radius:8px 0 0 8px;}
+  .box-tabs .tab:last-child{border-radius:0 8px 8px 0;}
+  .box-tabs .tab:not(:first-child){border-left:none;}
+  .box-tabs .tab.on{background:var(--yellow);color:#0B0D0F;border-color:var(--yellow);font-weight:700;}
