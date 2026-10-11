@@ -27,10 +27,12 @@ const aubLinks = new Map();       // code -> { controller, stopped }
 
 function aubConfigFor(code) {
   const custom = aubCredentials.get(code) || {};
+  const pass = custom.pass || AUB_PASS;
   return {
     url: (custom.url || AUB_URL || "").replace(/\/+$/, ""),
-    user: custom.user || AUB_USER,
-    pass: custom.pass || AUB_PASS,
+    // Con la chiave della squadra l'utente e' qualunque: conta solo la chiave.
+    user: custom.user || AUB_USER || (pass ? "pitcomm" : ""),
+    pass,
   };
 }
 
@@ -79,8 +81,11 @@ function timingFromRanking(payload) {
 function applyAubUpdate(code, payload) {
   const state = getRoomState(code);
   const flag = payload && payload.flag ? payload.flag : null;
+  // "Nessuna gara aperta" non e' un guasto: la squadra non ha una gara in corso
+  // (o non ancora). Si dice cosi', senza far credere che i dati siano vecchi.
+  const nessunaGara = Boolean(payload && payload.nessunaGara);
   setAubStatus(code, {
-    status: payload && payload.stale ? "dati non aggiornati" : "in ascolto",
+    status: nessunaGara ? "nessuna gara aperta ora" : payload && payload.stale ? "dati non aggiornati" : "in ascolto",
     error: null,
     flag,
     stale: Boolean(payload && payload.stale),
@@ -115,7 +120,11 @@ async function aubReadStream(code, link, driverId) {
 
   if (res.status === 401 || res.status === 403) {
     // Non e' un problema di rete: riprovare da soli non serve a niente.
-    const err = new Error("utente o password non validi");
+    const err = new Error(
+      res.status === 401
+        ? "chiave non valida o revocata: chiedine una nuova nel FactoryPortal"
+        : "la chiave non condivide la classifica: va spuntato l'ambito classifica"
+    );
     err.fatal = true;
     throw err;
   }
@@ -194,7 +203,7 @@ function aubStart(code, driverId, credenziali) {
       configured: false,
       connected: false,
       status: "errore",
-      error: "indirizzo, utente o password del server classifica mancanti",
+      error: "indirizzo o chiave del server classifica mancanti",
     });
     return;
   }
