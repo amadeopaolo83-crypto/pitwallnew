@@ -219,11 +219,11 @@
         <button class="btn small" style="flex:1" onclick="aubDisconnect()">Scollega</button>
       </div>
       <details style="margin-top:10px;">
-        <summary>Credenziali (solo se il server non le ha già)</summary>
-        <div class="row"><input type="text" id="aubUrl" placeholder="https://aub.esempio.it" autocomplete="off"></div>
-        <div class="row"><input type="text" id="aubUser" placeholder="Utente della squadra" autocomplete="username"></div>
-        <div class="row"><input type="password" id="aubPass" placeholder="Password" autocomplete="current-password"></div>
-        <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">Lasciali vuoti se utente e password sono già impostati sul server (AUB_URL, AUB_USER, AUB_PASS): è il posto giusto dove tenerli.</span></div>
+        <summary>Chiave della squadra (solo se il server non ce l'ha già)</summary>
+        <div class="row"><input type="text" id="aubUrl" placeholder="https://racedata.ingangeloni.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+        <div class="row"><input type="text" id="aubUser" placeholder="Utente: una parola qualsiasi (es. pit)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+        <div class="row"><input type="password" id="aubPass" placeholder="Chiave della squadra (aubk_…)" autocomplete="off"></div>
+        <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);">La chiave la genera l'admin della squadra nel FactoryPortal: Squadre → Gare → Accesso ai dati di gara (pitwall) → Nuova chiave. Si vede una sola volta. Decide lei quale gara è in corso e il numero vale solo per le vostre vetture. Il posto giusto dove tenerla è Render (AUB_URL, AUB_USER, AUB_PASS): da qui passa dal browser, comodo per una prova.</span></div>
       </details>
     </div>
 
