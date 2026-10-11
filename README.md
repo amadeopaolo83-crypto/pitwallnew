@@ -87,7 +87,7 @@ Controllo: nella radice del repository devi vedere `src`, `public`,
    |---|---|
    | `VAPID_PUBLIC_KEY` | dal file `chiavi-render-NON-CARICARE-SU-GITHUB.txt` |
    | `VAPID_PRIVATE_KEY` | dal file `chiavi-render-NON-CARICARE-SU-GITHUB.txt` |
-   | `AUB_URL`, `AUB_USER`, `AUB_PASS` | copiati dal vecchio servizio Render |
+   | `AUB_URL`, `AUB_USER`, `AUB_PASS` | il server classifica (vedi «Distacchi da AUB» qui sotto): `AUB_URL=https://racedata.ingangeloni.com`, `AUB_USER` una parola qualsiasi, `AUB_PASS` la chiave della squadra |
    | `BRIDGE_URL`, `BRIDGE_TOKEN` | indirizzo del ponte e parola d'ordine (vedi il README del ponte) |
 
    Senza chiavi il server parte lo stesso, ma le notifiche restano spente.
@@ -96,6 +96,36 @@ Controllo: nella radice del repository devi vedere `src`, `public`,
    Nell'app non c'è nessun indirizzo da impostare.
 
 Le chiavi vanno **solo su Render**, mai nel repository.
+
+
+### Distacchi da AUB (server classifica)
+
+Il collegamento lo apre il **server** di questa app, non i telefoni: il server
+classifica non manda header CORS, `EventSource` non sa mandare l'header
+`Authorization` e così la chiave sta in un posto solo. Il lavoro è di Claudio
+Angeloni (`src/aub.js` e la struttura del progetto).
+
+Il server classifica (racedata) riconosce la squadra con la **chiave della
+squadra**, che l'admin genera nel FactoryPortal: *Squadre → Gare → Accesso ai dati
+di gara (pitwall) → Nuova chiave*. La chiave si vede una sola volta.
+Con quella chiave il server manda **solo la gara che la squadra sta correndo in
+quel momento**: quale evento, quali sessioni e quale numero lo decide il portale.
+
+Su Render, nel servizio di questa app (Environment):
+
+```
+AUB_URL=https://racedata.ingangeloni.com
+AUB_USER=pit              # qualunque: conta solo la chiave (se manca si usa "pitcomm")
+AUB_PASS=aubk_...         # la chiave della squadra
+```
+
+In alternativa, per una prova, indirizzo e chiave si possono scrivere nella tendina
+**Chiave della squadra** della scheda **AUB** (Timing): la chiave passa dal browser.
+Poi si scrive il **numero di gara della vettura** e si tocca *Collega*: il numero
+sceglie solo fra le vetture della squadra iscritte alla gara in corso. Posizione,
+distacchi e chi hai davanti e dietro (`#42 · NOME`) arrivano da soli sull'auto.
+La riga di stato dice se è collegato, se non c'è una gara aperta, se i dati non sono
+aggiornati, la bandiera e gli errori della chiave.
 
 ---
 
@@ -196,7 +226,7 @@ durante una gara: il riavvio azzera lo stato (poi i telefoni lo ripristinano).
 | Pagina bianca 30-60 s | Il server si stava svegliando: attendi. |
 | "Impossibile raggiungere il server" | Il servizio su Render deve essere *Live*. |
 | Notifiche non attive | Le due chiavi su Render e il permesso notifiche del telefono. |
-| Distacchi AUB in errore | `AUB_URL`, `AUB_USER`, `AUB_PASS` su Render, poi **Collega**. Oppure prova **Nostro**. |
+| Distacchi AUB in errore | `AUB_URL` e `AUB_PASS` (la chiave) su Render, poi **Collega**. «Chiave non valida o revocata»: ne serve una nuova. «Non condivide la classifica»: l'admin deve spuntare l'ambito. «Nessuna gara aperta ora»: è normale fuori dalla finestra della gara. Oppure prova **Nostro**. |
 | "Nostro": il ponte non è configurato | Mancano `BRIDGE_URL` e `BRIDGE_TOKEN` sul server di questa app. |
 | "Nostro": il ponte rifiuta la parola d'ordine | `BRIDGE_TOKEN` diverso fra app e ponte: devono coincidere. |
 | "Nostro": il ponte non risponde | Il ponte si sta svegliando (fino a un minuto) o è spento: controlla su Render. |
