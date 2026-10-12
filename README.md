@@ -127,6 +127,30 @@ distacchi e chi hai davanti e dietro (`#42 · NOME`) arrivano da soli sull'auto.
 La riga di stato dice se è collegato, se non c'è una gara aperta, se i dati non sono
 aggiornati, la bandiera e gli errori della chiave.
 
+### Timer automatico (fasi di gara di Aub)
+
+Aub trasmette anche le fasi della gara con gli orari (PIT, RACE, PAUSE, END). Nel
+Timing, card **Timer gara**, il selettore **Manuale | Automatico (Aub)** sceglie da
+dove arrivano partenza e tempo gara. Il manuale resta com'è. In automatico:
+
+- il conto alla rovescia di partenza arriva all'inizio della prima fase **RACE**;
+- il tempo gara è la somma delle fasi RACE ancora da correre: durante **PAUSE** (o
+  fra due RACE) è fermo e poi riparte dal valore fermo;
+- lampeggio degli ultimi secondi, «VIA!» e foto finale funzionano come nel manuale,
+  perché usano lo stesso stato del timer;
+- la **bandiera a scacchi** di Aub fa partire il Finish solo con Finish *Automatico*
+  e solo nell'ultima parte della gara (ultimi 10 minuti), così non scatta per errore;
+- avvia, pausa, durate, velocità di test e salti sono fermi; **Azzera** torna al
+  manuale; «Reset completo» (anche la X sul Finish) riallinea agli orari di Aub;
+- se il collegamento cade i telefoni continuano a contare giusto da soli (orari
+  assoluti); se il server riparte, il box ripristina da solo l'automatico;
+- la card mostra una **riga di controllo** con le fasi lette, per esempio
+  «Aub: RACE 09:00→15:00 (fuso Europe/Rome)», e il problema se c'è.
+
+Serve la chiave con l'ambito **programma** (oltre a `classifica`). Gli orari di Aub
+sono «ora locale del circuito» senza fuso: su Render si può impostare `AUB_TZ`
+(predefinito `Europe/Rome`) se la gara è in un altro fuso.
+
 ---
 
 ## 4. Installare l'app sul telefono
@@ -226,6 +250,7 @@ durante una gara: il riavvio azzera lo stato (poi i telefoni lo ripristinano).
 | Pagina bianca 30-60 s | Il server si stava svegliando: attendi. |
 | "Impossibile raggiungere il server" | Il servizio su Render deve essere *Live*. |
 | Notifiche non attive | Le due chiavi su Render e il permesso notifiche del telefono. |
+| Timer automatico: «ambito programma» | La chiave non ha l'ambito `programma`: l'admin deve spuntarlo. «Nessuna fase di gara»: Aub non ha fasi per questa gara. Orari sfasati di un'ora: imposta `AUB_TZ`. |
 | Distacchi AUB in errore | `AUB_URL` e `AUB_PASS` (la chiave) su Render, poi **Collega**. «Chiave non valida o revocata»: ne serve una nuova. «Non condivide la classifica»: l'admin deve spuntare l'ambito. «Nessuna gara aperta ora»: è normale fuori dalla finestra della gara. Oppure prova **Nostro**. |
 | "Nostro": il ponte non è configurato | Mancano `BRIDGE_URL` e `BRIDGE_TOKEN` sul server di questa app. |
 | "Nostro": il ponte rifiuta la parola d'ordine | `BRIDGE_TOKEN` diverso fra app e ponte: devono coincidere. |
