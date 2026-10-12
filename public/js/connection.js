@@ -92,6 +92,13 @@ function restoreIntoFreshServer(state){
     }
   }
 
+  // Timer automatico (Aub): se il box lo usava, dopo un riavvio torna da solo.
+  if(fresh.timerSrc && role === 'box'){
+    let src = null;
+    try { src = localStorage.getItem('pc_timer_src'); } catch(e) {}
+    if(src === 'aub') socket.emit('timerSource', { source: 'aub' });
+  }
+
   // Lettura dal nostro ponte: se stava andando, riparte.
   if(fresh.ponte){
     const f = load('pc_ponte', null);

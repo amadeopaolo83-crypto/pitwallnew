@@ -29,7 +29,10 @@ function fmtHMS(totalSeconds){
 function applyTimerState(t){
   if(!t) return;
   const oldSpeed = lastTimerState ? lastTimerState.speed : 1;
-  const partitaOra = prevTimerPhase === 'start' && t.phase === 'race';
+  // "VIA!" solo se la gara e' davvero appena partita: passando al timer
+  // automatico a gara gia' avviata la fase cambia ma non e' un via.
+  const trascorsoGara = t.raceSeconds - currentRemainingClient(t.raceRemaining, t.raceUpdatedAt, t.raceRunning, t.speed);
+  const partitaOra = prevTimerPhase === 'start' && t.phase === 'race' && trascorsoGara < 45;
   prevTimerPhase = t.phase;
   // Il carburante segue la stessa velocita' di test del timer: se e' appena
   // cambiata, si congela il consumo fatto con quella vecchia prima di
@@ -59,6 +62,22 @@ function flashRacePartita(){
 // ---------- BOX: card di controllo ----------
 
 function renderTimerBox(t){
+  const auto = t.source === 'aub';
+  // Il box si ricorda la scelta: se il server riparte la rimanda da solo.
+  try { localStorage.setItem('pc_timer_src', auto ? 'aub' : 'manual'); } catch(e) {}
+  if($('timerSrcManual')) $('timerSrcManual').classList.toggle('active', !auto);
+  if($('timerSrcAub')) $('timerSrcAub').classList.toggle('active', auto);
+  if($('timerAubRow')) $('timerAubRow').hidden = !auto;
+  if($('timerAubInfo')){
+    const riga = [t.aubError ? 'Problema: ' + t.aubError : '', t.aubInfo || (t.aubError ? '' : 'Aub: in attesa delle fasi di gara…')]
+      .filter(Boolean).join('\n');
+    $('timerAubInfo').textContent = riga;
+    $('timerAubInfo').style.whiteSpace = 'pre-line';
+    $('timerAubInfo').style.color = t.aubError ? 'var(--red)' : '';
+  }
+  // In automatico i comandi manuali sono fermi (Azzera resta: torna al manuale).
+  document.querySelectorAll('#boxTab_timing .timer-manual').forEach(b => { b.disabled = auto; });
+  ['timerStartM', 'timerStartS', 'timerRaceH', 'timerRaceM', 'timerRaceS'].forEach(id => { if($(id)) $(id).disabled = auto; });
   if($('timerPhaseLabel')) $('timerPhaseLabel').textContent =
     t.phase === 'start' ? 'Fase: conto alla rovescia di partenza' :
     t.phase === 'race' ? 'Fase: gara in corso' : 'Fase: arrivo';
@@ -117,6 +136,7 @@ function timerRaceSet(){
   socket.emit('timerRaceSet', { seconds: totale });
 }
 
+function timerSetSource(source){ socket.emit('timerSource', { source: source === 'aub' ? 'aub' : 'manual' }); }
 function timerSetSpeed(speed){ socket.emit('timerTestSpeed', { speed }); }
 function timerDebugJump(preset){ socket.emit('timerDebugJump', { preset }); }
 
