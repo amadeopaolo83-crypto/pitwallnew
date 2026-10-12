@@ -259,3 +259,6 @@
   .box-tabs .tab:last-child{border-radius:0 8px 8px 0;}
   .box-tabs .tab:not(:first-child){border-left:none;}
   .box-tabs .tab.on{background:var(--yellow);color:#0B0D0F;border-color:var(--yellow);font-weight:700;}
+
+/* Comandi fermi (per esempio i timer manuali quando il timer e' in automatico) */
+.btn:disabled, input:disabled { opacity: .4; cursor: not-allowed; }
