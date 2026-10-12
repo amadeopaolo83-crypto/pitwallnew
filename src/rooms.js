@@ -90,10 +90,16 @@ function getRoomState(code) {
         finishTriggered: false,
         finishPosition: null,
         finishDriverName: "",
+        // Da dove arrivano i tempi: "manual" (li comanda il box) oppure "aub" (le
+        // fasi di gara che trasmette Aub, vedi aubtimer.js). aubInfo e' la riga di
+        // controllo con gli orari letti, aubError l'ultimo problema (o vuoto).
+        source: "manual",
+        aubInfo: "",
+        aubError: "",
       },
       // true finche' nessun dispositivo ha rimandato i propri valori dopo un
       // riavvio del server; si spegne da solo, una voce alla volta.
-      fresh: { fuel: true, buttons: true, race: true, ponte: true },
+      fresh: { fuel: true, buttons: true, race: true, ponte: true, timerSrc: true },
     });
   }
   return rooms.get(code);

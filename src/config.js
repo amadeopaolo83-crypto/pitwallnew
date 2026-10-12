@@ -18,6 +18,10 @@ const AUB_URL = (process.env.AUB_URL || "").replace(/\/+$/, "");
 const AUB_USER = process.env.AUB_USER || "";
 const AUB_PASS = process.env.AUB_PASS || "";
 
+// Fuso orario del circuito: gli orari delle fasi di gara che manda Aub sono "ora
+// locale del circuito" senza fuso. Serve al timer automatico. Predefinito Europe/Rome.
+const AUB_TZ = process.env.AUB_TZ || "Europe/Rome";
+
 // Indirizzo pubblico di questo stesso server: serve al keep-alive di gara,
 // che deve passare dall'esterno per contare come traffico in arrivo. Su
 // Render la variabile RENDER_EXTERNAL_URL c'e' gia'; altrove si puo' impostare
@@ -37,6 +41,7 @@ module.exports = {
   AUB_URL,
   AUB_USER,
   AUB_PASS,
+  AUB_TZ,
   SELF_URL,
   BRIDGE_URL,
   BRIDGE_TOKEN,

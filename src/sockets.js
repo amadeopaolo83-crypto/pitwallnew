@@ -6,6 +6,7 @@
 const { getRoomState } = require("./rooms");
 const { notifyBoxDevices } = require("./push");
 const aub = require("./aub");
+const aubtimer = require("./aubtimer");
 const ponte = require("./ponte");
 const keepalive = require("./keepalive");
 
@@ -226,13 +227,26 @@ function registra(io) {
       ponte.setStatus(joinedCode, { connected: false, status: "spento", error: null, session: null, flag: null });
     });
 
+    // ----- ORIGINE DEI TIMER: manuale oppure automatico (fasi di gara di Aub) -----
+    // In automatico partenza e gara arrivano dagli orari di Aub (vedi aubtimer.js) e i
+    // comandi manuali sono fermi; "Azzera" riporta al manuale.
+    socket.on("timerSource", ({ source } = {}) => {
+      if (!joinedCode) return;
+      const state = getRoomState(joinedCode);
+      state.fresh.timerSrc = false;
+      if (source === "aub") aubtimer.attiva(joinedCode);
+      else if (source === "manual") aubtimer.disattiva(joinedCode);
+    });
+    // Vero se i timer sono in automatico: i comandi manuali allora non fanno nulla.
+    const inAutomatico = () => getRoomState(joinedCode).raceTimer.source === "aub";
+
     // ----- TIMER DI PARTENZA (countdown verso il via) -----
 
     // BOX -> tutti: imposta la durata del countdown di partenza (solo da fermo)
     // La partenza puo' essere 0: in quel caso "Avvia" fa partire subito solo il
     // timer di gara (vedi timerControl).
     socket.on("timerStartSet", ({ seconds } = {}) => {
-      if (!joinedCode || typeof seconds !== "number" || !(seconds >= 0)) return;
+      if (!joinedCode || typeof seconds !== "number" || !(seconds >= 0) || inAutomatico()) return;
       const t = getRoomState(joinedCode).raceTimer;
       if (t.startRunning) return;
       t.startSeconds = seconds;
@@ -243,7 +257,7 @@ function registra(io) {
 
     // BOX -> tutti: start / pausa / azzera del timer di partenza
     socket.on("timerStartControl", ({ action } = {}) => {
-      if (!joinedCode) return;
+      if (!joinedCode || inAutomatico()) return;
       const t = getRoomState(joinedCode).raceTimer;
       if (t.phase !== "start") return;
       if (action === "start") {
@@ -266,6 +280,11 @@ function registra(io) {
     // di gara. Partenza a 0: "Avvia" fa partire subito solo il timer di gara.
     socket.on("timerControl", ({ action } = {}) => {
       if (!joinedCode) return;
+      // In automatico solo "Azzera" fa qualcosa: toglie l'automatico e azzera.
+      if (inAutomatico()) {
+        if (action !== "stop") return;
+        aubtimer.disattiva(joinedCode);
+      }
       const t = getRoomState(joinedCode).raceTimer;
       const now = Date.now();
       if (action === "start") {
@@ -312,7 +331,7 @@ function registra(io) {
     // BOX -> tutti: imposta/modifica la durata di gara (tipicamente da fermo o
     // in pausa, per esempio dopo una bandiera rossa che accorcia la gara)
     socket.on("timerRaceSet", ({ seconds } = {}) => {
-      if (!joinedCode || !seconds) return;
+      if (!joinedCode || !seconds || inAutomatico()) return;
       const t = getRoomState(joinedCode).raceTimer;
       if (t.raceRunning) return;
       t.raceSeconds = seconds;
@@ -323,7 +342,7 @@ function registra(io) {
 
     // BOX -> tutti: start / pausa / azzera del timer di gara
     socket.on("timerRaceControl", ({ action } = {}) => {
-      if (!joinedCode) return;
+      if (!joinedCode || inAutomatico()) return;
       const t = getRoomState(joinedCode).raceTimer;
       if (t.phase !== "race") return;
       if (action === "start") {
@@ -348,6 +367,8 @@ function registra(io) {
     socket.on("raceTimerAutoStart", () => {
       if (!joinedCode) return;
       const t = getRoomState(joinedCode).raceTimer;
+      // In automatico il via lo decidono gli orari di Aub: si riallinea in questo istante.
+      if (t.source === "aub") return aubtimer.sincronizza(joinedCode);
       if (t.phase !== "start") return;
       t.phase = "race";
       t.startRunning = false;
@@ -359,7 +380,7 @@ function registra(io) {
 
     // BOX -> tutti: modalita' test, velocita' accelerata dei timer
     socket.on("timerTestSpeed", ({ speed } = {}) => {
-      if (!joinedCode || !speed) return;
+      if (!joinedCode || !speed || inAutomatico()) return;
       const t = getRoomState(joinedCode).raceTimer;
       // congela i tempi correnti prima di cambiare velocita', per continuita'
       t.startRemaining = currentRemaining(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
@@ -373,6 +394,8 @@ function registra(io) {
     // BOX -> tutti: scorciatoie per saltare subito a un punto del flusso da testare
     socket.on("timerDebugJump", ({ preset } = {}) => {
       if (!joinedCode) return;
+      // In automatico resta solo il "Reset completo" (usato anche per chiudere il Finish).
+      if (inAutomatico() && preset !== "reset") return;
       const t = getRoomState(joinedCode).raceTimer;
       const now = Date.now();
       switch (preset) {
@@ -410,6 +433,8 @@ function registra(io) {
           return;
       }
       io.to(joinedCode).emit("timerUpdate", t);
+      // In automatico, chiuso il Finish i timer tornano subito agli orari di Aub.
+      if (t.source === "aub") aubtimer.sincronizza(joinedCode);
     });
 
     // ----- FINISH -----

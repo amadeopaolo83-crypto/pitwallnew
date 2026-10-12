@@ -11,6 +11,7 @@
 
 const { AUB_URL, AUB_USER, AUB_PASS } = require("./config");
 const { getRoomState } = require("./rooms");
+const aubtimer = require("./aubtimer");
 
 // L'istanza socket.io la crea server.js: gliela facciamo passare all'avvio
 // invece di importarla, cosi' non si crea un ciclo fra i moduli.
@@ -18,6 +19,8 @@ let io = null;
 
 function init(server) {
   io = server;
+  // Il timer automatico legge le fasi di gara da Aub con le stesse credenziali.
+  aubtimer.init(server, aubGetJson);
 }
 
 // Credenziali per stanza, tenute fuori dallo stato: lo stato viaggia verso
@@ -34,6 +37,27 @@ function aubConfigFor(code) {
     user: custom.user || AUB_USER || (pass ? "pitcomm" : ""),
     pass,
   };
+}
+
+// Una lettura singola (GET) con le credenziali di questa stanza: serve al timer
+// automatico per le fasi di gara (/racetime). Gli errori hanno un testo da mostrare.
+async function aubGetJson(code, percorso) {
+  const { url, user, pass } = aubConfigFor(code);
+  if (!url || !user || !pass) throw new Error("Aub non e' configurato (indirizzo e chiave)");
+  const auth = Buffer.from(`${user}:${pass}`).toString("base64");
+  const res = await fetch(`${url}${percorso}`, {
+    headers: { Authorization: `Basic ${auth}`, Accept: "application/json" },
+    redirect: "manual",
+    signal: AbortSignal.timeout(8000),
+  });
+  if (res.status === 401) throw new Error("chiave non valida o revocata");
+  if (res.status === 403) throw new Error("la chiave non ha l'ambito programma: serve per il timer automatico");
+  if (!res.ok) throw new Error(`Aub ha risposto ${res.status}`);
+  try {
+    return await res.json();
+  } catch (e) {
+    throw new Error("risposta di Aub non leggibile");
+  }
 }
 
 function setAubStatus(code, patch) {
@@ -91,6 +115,8 @@ function applyAubUpdate(code, payload) {
     stale: Boolean(payload && payload.stale),
     updatedAt: Date.now(),
   });
+  // La bandiera a scacchi puo' far partire il Finish del timer automatico.
+  aubtimer.suBandiera(code, flag && flag.state ? String(flag.state) : null);
   const timing = timingFromRanking(payload);
   if (!timing) return;
   state.timing = timing;
@@ -144,7 +170,13 @@ async function aubReadStream(code, link, driverId) {
       const blocco = buffer.slice(0, taglio);
       buffer = buffer.slice(taglio + 2);
       const { evento, dati } = parseSseChunk(blocco);
-      if (evento !== "update" || !dati) continue;
+      if (!dati) continue;
+      if (evento === "racetime") {
+        // Le fasi di gara cambiano: il timer automatico si riallinea.
+        try { aubtimer.suFasi(code, JSON.parse(dati)); } catch (e) { /* blocco malformato */ }
+        continue;
+      }
+      if (evento !== "update") continue;
       try {
         applyAubUpdate(code, JSON.parse(dati));
       } catch (e) {
