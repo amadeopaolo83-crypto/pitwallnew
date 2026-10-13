@@ -197,11 +197,13 @@ function registra(io) {
         ? { url: (url || "").trim(), user: (user || "").trim(), pass: pass || "" }
         : null;
       aub.start(joinedCode, numero, credenziali);
+      getRoomState(joinedCode).fresh.aub = false;
       ack && ack({ ok: true });
     });
 
     socket.on("aubDisconnect", () => {
       if (!joinedCode) return;
+      getRoomState(joinedCode).fresh.aub = false;
       aub.stop(joinedCode);
       aub.setStatus(joinedCode, {
         connected: false,

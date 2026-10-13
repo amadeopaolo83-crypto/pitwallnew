@@ -201,7 +201,14 @@ function aubStart(code, driverId, credenziali) {
   aubStop(code);
   // Credenziali passate dal box: valgono per questa stanza e si fermano qui,
   // fuori dallo stato che viene mandato ai telefoni.
-  if (credenziali) aubCredentials.set(code, credenziali);
+  // I campi lasciati vuoti non cancellano quelli gia' noti: riaprendo l'app con la
+  // chiave non riscritta non si perde quella che il server ha gia'.
+  if (credenziali) {
+    const prima = aubCredentials.get(code) || {};
+    const nuove = {};
+    for (const k of ["url", "user", "pass"]) nuove[k] = credenziali[k] || prima[k] || "";
+    aubCredentials.set(code, nuove);
+  }
   const { url, user, pass } = aubConfigFor(code);
   if (!url || !user || !pass) {
     setAubStatus(code, {

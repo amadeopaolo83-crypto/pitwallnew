@@ -99,7 +99,7 @@ function getRoomState(code) {
       },
       // true finche' nessun dispositivo ha rimandato i propri valori dopo un
       // riavvio del server; si spegne da solo, una voce alla volta.
-      fresh: { fuel: true, buttons: true, race: true, ponte: true, timerSrc: true },
+      fresh: { fuel: true, buttons: true, race: true, ponte: true, timerSrc: true, aub: true },
     });
   }
   return rooms.get(code);
