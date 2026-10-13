@@ -127,6 +127,12 @@ distacchi e chi hai davanti e dietro (`#42 · NOME`) arrivano da soli sull'auto.
 La riga di stato dice se è collegato, se non c'è una gara aperta, se i dati non sono
 aggiornati, la bandiera e gli errori della chiave.
 
+Il server legge la **classifica intera** (`/stream`, senza numero) e calcola da solo
+sia l'assoluta sia la categoria (`src/aubclassifica.js`, con lo stesso calcolo del
+ponte). Se il numero scritto nel box non è fra le righe, usa la vettura che Aub segna
+come `myself`; la riga di stato dice «vettura N non in classifica» se non trova né
+l'uno né l'altra. Con più vetture della squadra vale il numero scelto nel box.
+
 ### Timer automatico (fasi di gara di Aub)
 
 Aub trasmette anche le fasi della gara con gli orari (PIT, RACE, PAUSE, END). Nel
@@ -217,12 +223,14 @@ La fa il box e vale per tutti i telefoni della squadra.
   (la scritta gialla sotto il nome sul sito). Sotto la posizione compare anche quella
   assoluta (`GOLD · ass. 5°`).
 
-La categoria la conosce solo *Nostro*. Con AUB e con Manuali l'auto resta sull'assoluta
-anche se è scelta *Categoria*. Dopo un riavvio del server la scelta torna su *Assoluta*.
+La categoria la conoscono *Nostro* e *AUB* (dal campo `category` della classifica).
+Con Manuali l'auto resta sull'assoluta anche se è scelta *Categoria*. Dopo un riavvio del server la scelta torna su *Assoluta*.
 
 Nei distacchi di categoria, in qualifica si usa la differenza di miglior giro; in gara,
 con gli stessi giri, la differenza dei tempi totali; se i giri sono diversi la somma
 degli intervalli del sito, e per i doppiati i giri di differenza (`1 giro`).
+Con AUB l'intervallo è il campo `diff` (da chi sta davanti) e i giri di ritardo sono
+letti dal testo del distacco (`+1 lap`).
 
 **Da verificare alla prima gara.** Il calcolo è stato provato su qualifiche di
 motocross. Per qualifiche e prove il distacco è la differenza fra i migliori giri;
