@@ -344,5 +344,6 @@ module.exports = {
   start,
   stop,
   setStatus,
+  computeTiming,
   _test: { computeTiming, distanzaTra, formatSeconds, formatGap, validaEvento },
 };

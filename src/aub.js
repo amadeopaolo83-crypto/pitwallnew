@@ -12,6 +12,7 @@
 const { AUB_URL, AUB_USER, AUB_PASS } = require("./config");
 const { getRoomState } = require("./rooms");
 const aubtimer = require("./aubtimer");
+const { timingDaAub } = require("./aubclassifica");
 
 // L'istanza socket.io la crea server.js: gliela facciamo passare all'avvio
 // invece di importarla, cosi' non si crea un ciclo fra i moduli.
@@ -66,60 +67,32 @@ function setAubStatus(code, patch) {
   io.to(code).emit("aubStatus", state.aub);
 }
 
-// "00:01.234" -> "+1.234", "-00:00.850" -> "-0.850", "2 laps" resta com'e'.
-function formatGap(gap) {
-  if (!gap || typeof gap !== "string") return "";
-  if (/laps?/i.test(gap)) return gap;
-  const negative = gap.startsWith("-");
-  let body = negative ? gap.slice(1) : gap;
-  body = body.replace(/^0?0:/, "").replace(/^0(?=\d)/, "");
-  return (negative ? "-" : "+") + body;
-}
-
-// La vista /driver mette `myself: true` sulla riga della nostra vettura e
-// calcola i distacchi rispetto a lei: chi precede ha gap positivo, chi insegue
-// negativo. Ci servono solo le due righe adiacenti.
-function timingFromRanking(payload) {
-  const rows = Array.isArray(payload && payload.full_classification_json)
-    ? payload.full_classification_json
-    : [];
-  const i = rows.findIndex((r) => r && r.myself);
-  if (i < 0) return null;
-  const ahead = rows[i - 1];
-  const behind = rows[i + 1];
-  // `name` e' l'unico campo nome che il cronometraggio fornisce: nelle gare
-  // endurance di solito e' la squadra, ma non e' garantito. Il numero di gara
-  // invece e' inequivocabile, e in pista si riconosce prima.
-  return {
-    position: rows[i].pos ?? null,
-    gapAhead: ahead ? formatGap(ahead.gap) : "",
-    nameAhead: (ahead && ahead.name) || "",
-    numberAhead: (ahead && ahead.number) || "",
-    gapBehind: behind ? formatGap(behind.gap) : "",
-    nameBehind: (behind && behind.name) || "",
-    numberBehind: (behind && behind.number) || "",
-    updatedAt: Date.now(),
-  };
-}
-
-function applyAubUpdate(code, payload) {
+function applyAubUpdate(code, payload, numero) {
   const state = getRoomState(code);
   const flag = payload && payload.flag ? payload.flag : null;
   // "Nessuna gara aperta" non e' un guasto: la squadra non ha una gara in corso
   // (o non ancora). Si dice cosi', senza far credere che i dati siano vecchi.
   const nessunaGara = Boolean(payload && payload.nessunaGara);
+  const stale = Boolean(payload && payload.stale);
+  // La classifica arriva intera: assoluta e categoria le calcoliamo noi, con la
+  // stessa funzione del ponte. Il numero e' quello scelto dal box; se non c'e' fra
+  // le righe si usa la vettura che Aub segna come "myself".
+  const t = timingDaAub(payload, numero);
+  const mancante = !t.trovata && !t.vuota && !nessunaGara && !stale;
   setAubStatus(code, {
-    status: nessunaGara ? "nessuna gara aperta ora" : payload && payload.stale ? "dati non aggiornati" : "in ascolto",
+    status: nessunaGara ? "nessuna gara aperta ora"
+      : stale ? "dati non aggiornati"
+      : mancante ? `vettura ${numero} non in classifica`
+      : "in ascolto",
     error: null,
     flag,
-    stale: Boolean(payload && payload.stale),
+    stale,
     updatedAt: Date.now(),
   });
   // La bandiera a scacchi puo' far partire il Finish del timer automatico.
   aubtimer.suBandiera(code, flag && flag.state ? String(flag.state) : null);
-  const timing = timingFromRanking(payload);
-  if (!timing) return;
-  state.timing = timing;
+  if (!t.trovata) return;
+  state.timing = t.timing;
   io.to(code).emit("timingUpdate", state.timing);
 }
 
@@ -139,7 +112,7 @@ function parseSseChunk(blocco) {
 async function aubReadStream(code, link, driverId) {
   const { url, user, pass } = aubConfigFor(code);
   const auth = Buffer.from(`${user}:${pass}`).toString("base64");
-  const res = await fetch(`${url}/stream?id=${encodeURIComponent(driverId)}&range=1`, {
+  const res = await fetch(`${url}/stream`, {
     headers: { Authorization: `Basic ${auth}`, Accept: "text/event-stream" },
     signal: link.controller.signal,
   });
@@ -178,7 +151,7 @@ async function aubReadStream(code, link, driverId) {
       }
       if (evento !== "update") continue;
       try {
-        applyAubUpdate(code, JSON.parse(dati));
+        applyAubUpdate(code, JSON.parse(dati), driverId);
       } catch (e) {
         // Un blocco malformato non deve buttare giu' il collegamento.
       }
