@@ -64,9 +64,12 @@ function serviRichiesta(req, res) {
   if ((req.url || "").startsWith("/api/aub-diagnosi")) {
     let code = "";
     try { code = new URL(req.url, "http://x").searchParams.get("code") || ""; } catch (e) { /* sotto: 404 */ }
-    const d = code ? require("./aub").diagnosi(code) : null;
-    res.writeHead(d ? 200 : 404, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-    return res.end(d ? JSON.stringify(d, null, 1) : JSON.stringify({ errore: "nessun dato per questo codice (serve ?code=CODICE e la lettura AUB attiva)" }));
+    const chiedi = code ? require("./aub").diagnosiCompleta(code) : Promise.resolve(null);
+    chiedi.catch(() => null).then((d) => {
+      res.writeHead(d ? 200 : 404, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+      res.end(d ? JSON.stringify(d, null, 1) : JSON.stringify({ errore: "nessun dato per questo codice (serve ?code=CODICE e la lettura AUB attiva)" }));
+    });
+    return;
   }
 
   if (req.method !== "GET" && req.method !== "HEAD") {

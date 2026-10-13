@@ -72,13 +72,25 @@ function setAubStatus(code, patch) {
 // (GET /api/aub-diagnosi?code=...). Non contiene credenziali.
 const aubDiagnosi = new Map(); // code -> istantanea
 
+function righeEssenziali(payload) {
+  return (Array.isArray(payload && payload.full_classification_json) ? payload.full_classification_json : [])
+    .filter((r) => r && typeof r === "object")
+    .sort((a, b) => Number(a.pos) - Number(b.pos))
+    .map((r) => ({ pos: r.pos, number: r.number, name: r.name, category: r.category, laps: r.laps, bestlap: r.bestlap, gap: r.gap, diff: r.diff, myself: !!r.myself }));
+}
+
 function salvaDiagnosi(code, payload, numero, t) {
   try {
-    const righe = (Array.isArray(payload && payload.full_classification_json) ? payload.full_classification_json : [])
-      .filter((r) => r && typeof r === "object")
-      .sort((a, b) => Number(a.pos) - Number(b.pos))
-      .map((r) => ({ pos: r.pos, number: r.number, name: r.name, category: r.category, laps: r.laps, bestlap: r.bestlap, gap: r.gap, diff: r.diff, myself: !!r.myself }));
+    const righe = righeEssenziali(payload);
+    const prima = aubDiagnosi.get(code);
+    const adesso = Date.now();
+    const intervalli = prima ? (prima.secondiTraGliAggiornamenti || []).slice(-5) : [];
+    if (prima && prima._at) intervalli.push(Math.round((adesso - prima._at) / 100) / 10);
     aubDiagnosi.set(code, {
+      _at: adesso,
+      aggiornamentiRicevuti: (prima ? prima.aggiornamentiRicevuti : 0) + 1,
+      secondiTraGliAggiornamenti: intervalli,
+      datiAub: payload ? { lastUpdate: payload.lastUpdate, ageSeconds: payload.ageSeconds, updateInterval: payload.updateInterval, maxDataAgeSeconds: payload.maxDataAgeSeconds } : null,
       ricevutoAlle: new Date().toISOString(),
       numeroRichiesto: numero == null ? null : String(numero),
       campiLetti: righe.length ? (capireCampi(righe) === "scambiati" ? "gap = intervallo da chi sta davanti, diff = cumulativo" : "gap = cumulativo, diff = intervallo da chi sta davanti") : null,
@@ -91,7 +103,34 @@ function salvaDiagnosi(code, payload, numero, t) {
 }
 
 function diagnosi(code) {
-  return aubDiagnosi.get(String(code || "").toUpperCase()) || aubDiagnosi.get(String(code || "")) || null;
+  const c = String(code || "");
+  const chiave = aubDiagnosi.has(c) ? c : aubDiagnosi.has(c.toUpperCase()) ? c.toUpperCase() : null;
+  if (!chiave) return null;
+  const { _at, ...d } = aubDiagnosi.get(chiave);
+  return { ...d, _stanza: chiave };
+}
+
+// Come diagnosi(), piu' una lettura fresca di /classifica fatta in questo istante:
+// se i due non coincidono, e' il flusso che arriva in ritardo, non il calcolo.
+async function diagnosiCompleta(code) {
+  const d = diagnosi(code);
+  if (!d) return null;
+  const chiave = d._stanza;
+  delete d._stanza;
+  try {
+    const fresca = await aubGetJson(chiave, "/classifica");
+    const righe = righeEssenziali(fresca);
+    const t = timingDaAub(fresca, d.numeroRichiesto);
+    d.adessoDaClassifica = {
+      letta: new Date().toISOString(),
+      datiAub: { lastUpdate: fresca.lastUpdate, ageSeconds: fresca.ageSeconds, updateInterval: fresca.updateInterval },
+      calcolato: t && t.trovata ? t.timing : null,
+      righe,
+    };
+  } catch (e) {
+    d.adessoDaClassifica = { errore: e.message || String(e) };
+  }
+  return d;
 }
 
 function applyAubUpdate(code, payload, numero) {
@@ -265,4 +304,5 @@ module.exports = {
   stop: aubStop,
   setStatus: setAubStatus,
   diagnosi,
+  diagnosiCompleta,
 };
