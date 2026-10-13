@@ -68,16 +68,32 @@ function aubConnect(btnEl){
   const pass = $('aubPass').value;
   if(url) localStorage.setItem('pc_aub_url', url);
   if(user) localStorage.setItem('pc_aub_user', user);
+  // La chiave resta su questo dispositivo: non va riscritta a ogni apertura.
+  if(pass){ try{ localStorage.setItem('pc_aub_pass', pass); }catch(e){} }
   if(btnEl) btnEl.disabled = true;
   setAubLabel('Stato: collegamento…');
   socket.emit('aubConnect', { driverId, url, user, pass }, (res) => {
     if(btnEl) btnEl.disabled = false;
-    if(!res || !res.ok) setAubLabel('Errore: ' + ((res && res.error) || 'collegamento non riuscito'), true);
+    if(!res || !res.ok){
+      setAubLabel('Errore: ' + ((res && res.error) || 'collegamento non riuscito'), true);
+      return;
+    }
+    // Se il server riparte, il box si ricorda cosa stava leggendo e lo riavvia da solo.
+    save('pc_aub', { code: code, driverId: driverId, url: url, user: user, active: true, at: Date.now() });
   });
 }
 
 function aubDisconnect(){
   socket.emit('aubDisconnect');
+  const salvato = load('pc_aub', null);
+  if(salvato) save('pc_aub', { ...salvato, active: false });
+}
+
+// Toglie la chiave da questo dispositivo (per esempio se il telefono passa a un altro).
+function aubForgetKey(){
+  try{ localStorage.removeItem('pc_aub_pass'); }catch(e){}
+  if($('aubPass')) $('aubPass').value = '';
+  setAubLabel('Chiave dimenticata su questo dispositivo');
 }
 
 function setAubLabel(text, isError){

@@ -99,6 +99,17 @@ function restoreIntoFreshServer(state){
     if(src === 'aub') socket.emit('timerSource', { source: 'aub' });
   }
 
+  // Classifica AUB: se il box la stava leggendo, dopo un riavvio riparte da sola con la
+  // chiave ricordata su questo dispositivo.
+  if(fresh.aub && role === 'box'){
+    const f = load('pc_aub', null);
+    if(f && f.code === code && f.active && f.driverId && (Date.now() - f.at) < FUEL_LOCAL_MAX_MS){
+      let pass = '';
+      try{ pass = localStorage.getItem('pc_aub_pass') || ''; }catch(e){}
+      socket.emit('aubConnect', { driverId: f.driverId, url: f.url || '', user: f.user || '', pass });
+    }
+  }
+
   // Lettura dal nostro ponte: se stava andando, riparte.
   if(fresh.ponte){
     const f = load('pc_ponte', null);

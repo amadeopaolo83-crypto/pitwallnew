@@ -17,11 +17,13 @@ function enterBoxView(){
   try{ tab = localStorage.getItem('pc_box_tab') || 'gara'; }catch(e){}
   setBoxTab(['gara', 'timing', 'settings'].includes(tab) ? tab : 'gara');
   $('boxCodePill').textContent = code;
-  // Numero di gara, indirizzo e utente si ricordano; la password no, si
-  // riscrive (o meglio: sta nelle variabili d'ambiente del server).
+  // Numero di gara, indirizzo, utente e chiave si ricordano su questo dispositivo
+  // (la chiave resta finche' non si preme "Dimentica la chiave"). Il posto piu' sicuro
+  // resta comunque Render (variabili d'ambiente del server).
   if($('aubDriverId') && !$('aubDriverId').value) $('aubDriverId').value = localStorage.getItem('pc_aub_driver') || '';
   if($('aubUrl')) $('aubUrl').value = localStorage.getItem('pc_aub_url') || '';
   if($('aubUser')) $('aubUser').value = localStorage.getItem('pc_aub_user') || '';
+  if($('aubPass')){ try{ $('aubPass').value = localStorage.getItem('pc_aub_pass') || ''; }catch(e){} }
   setTimingSource(localStorage.getItem('pc_timing_source') || 'server');
   renderQbEditor();
   renderFlashEditor();
