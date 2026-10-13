@@ -105,4 +105,13 @@ function getRoomState(code) {
   return rooms.get(code);
 }
 
-module.exports = { rooms, getRoomState };
+// La posizione da mostrare nella schermata Finish: quella di CATEGORIA se la fonte la
+// conosce (e' l'arrivo che conta per la squadra), altrimenti l'assoluta, altrimenti nulla.
+function posizioneFinale(timing) {
+  if (!timing) return null;
+  const cat = Number(timing.catPosition);
+  if (timing.catName && Number.isFinite(cat) && cat > 0) return cat;
+  return timing.position != null ? timing.position : null;
+}
+
+module.exports = { rooms, getRoomState, posizioneFinale };

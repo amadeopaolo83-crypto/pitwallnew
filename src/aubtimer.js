@@ -19,7 +19,7 @@
 // Come il resto dei timer, nessun ciclo di conteggio sul server: ogni tanto (a ogni
 // cambio di fase e ogni 30 s) si riallinea lo stato, e i client contano da soli.
 
-const { getRoomState } = require("./rooms");
+const { getRoomState, posizioneFinale } = require("./rooms");
 const { AUB_TZ } = require("./config");
 
 let io = null;
@@ -298,7 +298,7 @@ function suBandiera(code, stato) {
   if (resta > FINISH_DA_BANDIERA_ENTRO_S) return;
   t.phase = "finished";
   t.finishTriggered = true;
-  t.finishPosition = state.timing ? state.timing.position : null;
+  t.finishPosition = posizioneFinale(state.timing);
   emetti(code);
 }
 

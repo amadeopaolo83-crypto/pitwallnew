@@ -3,7 +3,7 @@
 // Ogni "team" e' una stanza identificata dal codice inserito nell'app: chi
 // conosce il codice entra, e ogni messaggio raggiunge solo quella stanza.
 
-const { getRoomState } = require("./rooms");
+const { getRoomState, posizioneFinale } = require("./rooms");
 const { notifyBoxDevices } = require("./push");
 const aub = require("./aub");
 const aubtimer = require("./aubtimer");
@@ -457,7 +457,7 @@ function registra(io) {
       const t = state.raceTimer;
       t.phase = "finished";
       t.finishTriggered = true;
-      t.finishPosition = position != null ? position : (state.timing ? state.timing.position : null);
+      t.finishPosition = position != null ? position : posizioneFinale(state.timing);
       if (driverName) t.finishDriverName = driverName;
       io.to(joinedCode).emit("timerUpdate", t);
     });
