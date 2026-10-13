@@ -42,7 +42,7 @@ function aubConfigFor(code) {
 
 // Una lettura singola (GET) con le credenziali di questa stanza: serve al timer
 // automatico per le fasi di gara (/racetime). Gli errori hanno un testo da mostrare.
-async function aubGetJson(code, percorso) {
+async function aubGetJson(code, percorso, ambito = "programma") {
   const { url, user, pass } = aubConfigFor(code);
   if (!url || !user || !pass) throw new Error("Aub non e' configurato (indirizzo e chiave)");
   const auth = Buffer.from(`${user}:${pass}`).toString("base64");
@@ -52,7 +52,11 @@ async function aubGetJson(code, percorso) {
     signal: AbortSignal.timeout(8000),
   });
   if (res.status === 401) throw new Error("chiave non valida o revocata");
-  if (res.status === 403) throw new Error("la chiave non ha l'ambito programma: serve per il timer automatico");
+  if (res.status === 403) {
+    throw new Error(ambito === "classifica"
+      ? "la chiave non condivide la classifica: va spuntato l'ambito classifica"
+      : "la chiave non ha l'ambito programma: serve per il timer automatico");
+  }
   if (!res.ok) throw new Error(`Aub ha risposto ${res.status}`);
   try {
     return await res.json();
@@ -93,7 +97,13 @@ function salvaDiagnosi(code, payload, numero, t) {
       datiAub: payload ? { lastUpdate: payload.lastUpdate, ageSeconds: payload.ageSeconds, updateInterval: payload.updateInterval, maxDataAgeSeconds: payload.maxDataAgeSeconds } : null,
       ricevutoAlle: new Date().toISOString(),
       numeroRichiesto: numero == null ? null : String(numero),
-      campiLetti: righe.length ? (capireCampi(righe) === "scambiati" ? "gap = intervallo da chi sta davanti, diff = cumulativo" : "gap = cumulativo, diff = intervallo da chi sta davanti") : null,
+      campiLetti: righe.length ? ({
+        scambiati: "gap = intervallo da chi sta davanti, diff = cumulativo dal primo",
+        documento: "gap = cumulativo dal primo, diff = intervallo da chi sta davanti",
+        cumGap: "gap = distacco con segno da un riferimento (noi), valori vicini di categoria",
+        cumDiff: "diff = distacco con segno da un riferimento (noi)",
+      }[capireCampi(righe)] || null) : null,
+      listaParziale: t && t.parziale ? "il flusso manda solo i vicini della categoria: i calcoli usano la classifica intera" : false,
       stale: Boolean(payload && payload.stale),
       nessunaGara: Boolean(payload && payload.nessunaGara),
       calcolato: t && t.trovata ? t.timing : null,
@@ -117,8 +127,12 @@ async function diagnosiCompleta(code) {
   if (!d) return null;
   const chiave = d._stanza;
   delete d._stanza;
+  const cl = aubClassifica.get(chiave);
+  d.letturaClassificaIntera = cl
+    ? { ultimaRiuscitaAlle: cl.ultimoOk ? new Date(cl.ultimoOk).toISOString() : null, errore: cl.errore }
+    : "non necessaria: il flusso manda gia' la classifica intera";
   try {
-    const fresca = await aubGetJson(chiave, "/classifica");
+    const fresca = await aubGetJson(chiave, "/classifica", "classifica");
     const righe = righeEssenziali(fresca);
     const t = timingDaAub(fresca, d.numeroRichiesto);
     d.adessoDaClassifica = {
@@ -158,9 +172,59 @@ function applyAubUpdate(code, payload, numero) {
   });
   // La bandiera a scacchi puo' far partire il Finish del timer automatico.
   aubtimer.suBandiera(code, flag && flag.state ? String(flag.state) : null);
-  if (!t.trovata) return;
+  // Se il flusso manda solo i vicini della categoria, posizione di categoria e vicini in
+  // classifica generale vengono dalla classifica intera (/classifica), letta qui accanto.
+  // Il flusso resta per la bandiera, lo stato e come ripiego se /classifica non risponde.
+  if (t.trovata && t.parziale) chiediClassifica(code, numero);
+  const cl = aubClassifica.get(code);
+  const recente = cl && cl.ultimoOk && Date.now() - cl.ultimoOk < 30000;
+  if (!t.trovata || (t.parziale && recente)) return;
   state.timing = t.timing;
   io.to(code).emit("timingUpdate", state.timing);
+}
+
+// Lettura della classifica intera, al massimo una ogni 2,5 s (Aub ne ammette una ogni 2 s)
+// e una alla volta; se arrivano piu' richieste se ne fa una sola, con l'ultimo numero.
+const aubClassifica = new Map(); // code -> { inCorso, timer, ultimo, ultimoOk, errore, numero }
+const OGNI_CLASSIFICA_MS = 2500;
+
+function chiediClassifica(code, numero) {
+  let c = aubClassifica.get(code);
+  if (!c) {
+    c = { inCorso: false, timer: null, ultimo: 0, ultimoOk: 0, errore: null, numero };
+    aubClassifica.set(code, c);
+  }
+  c.numero = numero;
+  if (c.inCorso || c.timer) return;
+  const attesa = Math.max(0, OGNI_CLASSIFICA_MS - (Date.now() - c.ultimo));
+  c.timer = setTimeout(async () => {
+    c.timer = null;
+    c.inCorso = true;
+    c.ultimo = Date.now();
+    try {
+      const payload = await aubGetJson(code, "/classifica", "classifica");
+      if (aubClassifica.get(code) !== c) return; // collegamento fermato nel frattempo
+      const t = timingDaAub(payload, c.numero);
+      if (t.trovata) {
+        c.ultimoOk = Date.now();
+        c.errore = null;
+        getRoomState(code).timing = t.timing;
+        io.to(code).emit("timingUpdate", t.timing);
+      } else {
+        c.errore = payload && payload.nessunaGara ? "nessuna gara aperta" : `vettura ${c.numero} non nella classifica intera`;
+      }
+    } catch (e) {
+      c.errore = e.message || String(e);
+    } finally {
+      c.inCorso = false;
+    }
+  }, attesa);
+}
+
+function fermaClassifica(code) {
+  const c = aubClassifica.get(code);
+  if (c && c.timer) clearTimeout(c.timer);
+  aubClassifica.delete(code);
 }
 
 // Il flusso SSE arriva a blocchi separati da riga vuota; le righe che iniziano
@@ -257,6 +321,7 @@ async function aubLoop(code, link, driverId) {
 }
 
 function aubStop(code) {
+  fermaClassifica(code);
   const link = aubLinks.get(code);
   if (!link) return;
   link.stopped = true;

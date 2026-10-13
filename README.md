@@ -144,6 +144,10 @@ sia l'assoluta sia la categoria (`src/aubclassifica.js`, con lo stesso calcolo d
 ponte). Se il numero scritto nel box non è fra le righe, usa la vettura che Aub segna
 come `myself`; la riga di stato dice «vettura N non in classifica» se non trova né
 l'uno né l'altra. Con più vetture della squadra vale il numero scelto nel box.
+Se Aub, senza il numero della vettura, manda soltanto la nostra vettura e i vicini della sua
+categoria, il server legge anche `/classifica` (al massimo una volta ogni 2,5 s): da lì vengono
+la posizione di categoria vera e i vicini in classifica generale. Finché non arriva, la posizione
+di categoria resta «—» e i vicini non adiacenti non si mostrano, invece di mostrarne di sbagliati.
 
 ### Timer automatico (fasi di gara di Aub)
 

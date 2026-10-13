@@ -209,7 +209,24 @@ function timingDaAub(payload, richiesto) {
   const numero = nostroNumero(payload, richiesto);
   if (!numero) return { trovata: false, vuota: false };
   const c = computeTiming({ tipo: "gara" }, piloti, numero);
-  return c.trovata ? { trovata: true, timing: c.timing } : { trovata: false, vuota: false };
+  if (!c.trovata) return { trovata: false, vuota: false };
+  // Aub, senza il numero della vettura, puo' mandare solo la nostra vettura e i vicini
+  // della sua categoria (posizioni con dei buchi, il primo non c'e'). Da una lista cosi'
+  // i vicini in classifica generale e la posizione di categoria non si possono sapere.
+  const posizioni = piloti.map((p) => p.pos).sort((a, b) => a - b);
+  const parziale = posizioni[0] > 1 || posizioni.some((p, k) => k > 0 && p - posizioni[k - 1] !== 1);
+  if (parziale) {
+    const t = c.timing;
+    const mia = Number(t.position);
+    const accanto = (numeroVicino, posAttesa) => {
+      const v = piloti.find((p) => p.numero === String(numeroVicino));
+      return Boolean(v) && v.pos === posAttesa;
+    };
+    if (!accanto(t.numberAhead, mia - 1)) { t.gapAhead = ""; t.nameAhead = ""; t.numberAhead = ""; }
+    if (!accanto(t.numberBehind, mia + 1)) { t.gapBehind = ""; t.nameBehind = ""; t.numberBehind = ""; }
+    t.catPosition = null;
+  }
+  return { trovata: true, timing: c.timing, parziale };
 }
 
 module.exports = { timingDaAub, pilotiDaAub, nostroNumero, parseTempo, parseTempoFirmato, parseGiri, capireCampi, _reset: () => { ultimaScelta = null; } };
