@@ -59,6 +59,16 @@ function serviRichiesta(req, res) {
     return res.end(VAPID_PUBLIC_KEY);
   }
 
+  // Diagnosi: i dati grezzi dell'ultimo aggiornamento di Aub e quello che ne e' stato
+  // calcolato, per confrontarli con quello che si vede sull'auto. Serve il codice della stanza.
+  if ((req.url || "").startsWith("/api/aub-diagnosi")) {
+    let code = "";
+    try { code = new URL(req.url, "http://x").searchParams.get("code") || ""; } catch (e) { /* sotto: 404 */ }
+    const d = code ? require("./aub").diagnosi(code) : null;
+    res.writeHead(d ? 200 : 404, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    return res.end(d ? JSON.stringify(d, null, 1) : JSON.stringify({ errore: "nessun dato per questo codice (serve ?code=CODICE e la lettura AUB attiva)" }));
+  }
+
   if (req.method !== "GET" && req.method !== "HEAD") {
     res.writeHead(405, { "Content-Type": "text/plain; charset=utf-8", Allow: "GET, HEAD" });
     return res.end("Metodo non consentito\n");

@@ -12,7 +12,7 @@
 const { AUB_URL, AUB_USER, AUB_PASS } = require("./config");
 const { getRoomState } = require("./rooms");
 const aubtimer = require("./aubtimer");
-const { timingDaAub } = require("./aubclassifica");
+const { timingDaAub, capireCampi } = require("./aubclassifica");
 
 // L'istanza socket.io la crea server.js: gliela facciamo passare all'avvio
 // invece di importarla, cosi' non si crea un ciclo fra i moduli.
@@ -67,6 +67,33 @@ function setAubStatus(code, patch) {
   io.to(code).emit("aubStatus", state.aub);
 }
 
+// Ultima classifica ricevuta e quello che ne e' stato calcolato, per stanza. Serve a
+// confrontare, nello stesso istante, i dati grezzi di Aub con quello che vede l'auto
+// (GET /api/aub-diagnosi?code=...). Non contiene credenziali.
+const aubDiagnosi = new Map(); // code -> istantanea
+
+function salvaDiagnosi(code, payload, numero, t) {
+  try {
+    const righe = (Array.isArray(payload && payload.full_classification_json) ? payload.full_classification_json : [])
+      .filter((r) => r && typeof r === "object")
+      .sort((a, b) => Number(a.pos) - Number(b.pos))
+      .map((r) => ({ pos: r.pos, number: r.number, name: r.name, category: r.category, laps: r.laps, bestlap: r.bestlap, gap: r.gap, diff: r.diff, myself: !!r.myself }));
+    aubDiagnosi.set(code, {
+      ricevutoAlle: new Date().toISOString(),
+      numeroRichiesto: numero == null ? null : String(numero),
+      campiLetti: righe.length ? (capireCampi(righe) === "scambiati" ? "gap = intervallo da chi sta davanti, diff = cumulativo" : "gap = cumulativo, diff = intervallo da chi sta davanti") : null,
+      stale: Boolean(payload && payload.stale),
+      nessunaGara: Boolean(payload && payload.nessunaGara),
+      calcolato: t && t.trovata ? t.timing : null,
+      righe,
+    });
+  } catch (e) { /* la diagnosi non deve mai fermare la lettura */ }
+}
+
+function diagnosi(code) {
+  return aubDiagnosi.get(String(code || "").toUpperCase()) || aubDiagnosi.get(String(code || "")) || null;
+}
+
 function applyAubUpdate(code, payload, numero) {
   const state = getRoomState(code);
   const flag = payload && payload.flag ? payload.flag : null;
@@ -78,6 +105,7 @@ function applyAubUpdate(code, payload, numero) {
   // stessa funzione del ponte. Il numero e' quello scelto dal box; se non c'e' fra
   // le righe si usa la vettura che Aub segna come "myself".
   const t = timingDaAub(payload, numero);
+  salvaDiagnosi(code, payload, numero, t);
   const mancante = !t.trovata && !t.vuota && !nessunaGara && !stale;
   setAubStatus(code, {
     status: nessunaGara ? "nessuna gara aperta ora"
@@ -236,4 +264,5 @@ module.exports = {
   start: aubStart,
   stop: aubStop,
   setStatus: setAubStatus,
+  diagnosi,
 };

@@ -135,6 +135,10 @@ distacchi e chi hai davanti e dietro (`#42 · NOME`) arrivano da soli sull'auto.
 La riga di stato dice se è collegato, se non c'è una gara aperta, se i dati non sono
 aggiornati, la bandiera e gli errori della chiave.
 
+**Diagnosi:** `https://<il-tuo-server>/api/aub-diagnosi?code=CODICE` mostra i dati grezzi dell'ultimo
+aggiornamento di Aub (tutte le righe, `gap` e `diff` come arrivano), quale campo è stato letto come
+intervallo e i distacchi calcolati per l'auto, tutto nello stesso istante. Serve il codice della stanza.
+
 Il server legge la **classifica intera** (`/stream`, senza numero) e calcola da solo
 sia l'assoluta sia la categoria (`src/aubclassifica.js`, con lo stesso calcolo del
 ponte). Se il numero scritto nel box non è fra le righe, usa la vettura che Aub segna
