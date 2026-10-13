@@ -121,6 +121,14 @@ AUB_PASS=aubk_...         # la chiave della squadra
 
 In alternativa, per una prova, indirizzo e chiave si possono scrivere nella tendina
 **Chiave della squadra** della scheda **AUB** (Timing): la chiave passa dal browser.
+**La chiave resta sul dispositivo**: dopo *Collega* viene ricordata nella memoria del
+telefono/PC del box (`localStorage`, mai nel riepilogo condiviso né nello stato del
+server) e riaprendo l'app la tendina è già compilata. Se il server si riavvia durante
+la gara, il box rilancia da solo il collegamento con indirizzo, utente, numero e chiave
+ricordati (entro 30 ore, solo se non era stato premuto *Scollega*). Il pulsante
+*Dimentica la chiave su questo dispositivo* la cancella. Lato server, se arriva un
+*Collega* con la chiave vuota si tiene l'ultima nota per quella squadra. Il posto più
+sicuro e che non dipende da nessun dispositivo resta comunque `AUB_PASS` su Render.
 Poi si scrive il **numero di gara della vettura** e si tocca *Collega*: il numero
 sceglie solo fra le vetture della squadra iscritte alla gara in corso. Posizione,
 distacchi e chi hai davanti e dietro (`#42 · NOME`) arrivano da soli sull'auto.
