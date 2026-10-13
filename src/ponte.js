@@ -88,6 +88,11 @@ function distanzaTra(sessione, validi, iDavanti, iDietro) {
     const d = b.tempoTotale - a.tempoTotale;
     if (d >= 0) return { sec: d };
   }
+  // Se il distacco e' un valore cumulativo (misurato da un riferimento) la distanza fra
+  // due piloti e' la differenza dei loro valori, anche se in mezzo c'e' chi e' doppiato.
+  if (num(a.cumulativo) !== null && num(b.cumulativo) !== null) {
+    return { sec: Math.round(Math.abs(b.cumulativo - a.cumulativo) * 1000) / 1000 };
+  }
   let somma = 0;
   let completa = true;
   for (let k = iDavanti + 1; k <= iDietro; k++) {

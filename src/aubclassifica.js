@@ -26,6 +26,17 @@ function parseTempo(testo) {
   return Number.isFinite(sec) ? Math.round(sec * 1000) / 1000 : null;
 }
 
+// Come parseTempo ma tenendo il segno: "-00:36.144" -> -36.144, "+12.4" -> 12.4.
+// Serve quando il distacco e' misurato da un punto di riferimento (noi): chi sta
+// davanti ha un valore positivo, chi sta dietro negativo.
+function parseTempoFirmato(testo) {
+  if (typeof testo === "number") return Number.isFinite(testo) ? testo : null;
+  const t = String(testo == null ? "" : testo).trim();
+  const v = parseTempo(t.replace(/^[\u2212\u2013]/, "-"));
+  if (v === null) return null;
+  return /^[-\u2212\u2013]/.test(t) ? -v : v;
+}
+
 // "+1 lap", "2 laps", "1 giro", "3 giri" -> numero di giri; altrimenti null.
 function parseGiri(testo) {
   const m = /(\d+)\s*(?:laps?|giri|giro|l)\b/i.exec(String(testo == null ? "" : testo));
@@ -42,11 +53,57 @@ function parseGiri(testo) {
 const TOLLERANZA = 0.0025; // arrotondamenti al millesimo
 let ultimaScelta = null; // "documento" | "scambiati"
 
+// Un campo e' un distacco "cumulativo" (una posizione su un asse del tempo) quando i
+// suoi valori, letti in ordine di classifica, vanno sempre nella stessa direzione.
+// L'intervallo da chi sta davanti si ottiene allora come differenza fra due righe.
+// Due varianti: dal primo (crescente) oppure da una vettura di riferimento, di solito
+// la nostra (positivo davanti, zero su di noi, negativo dietro: decrescente).
+function andamento(valori) {
+  let n = 0, su = 0, giu = 0, ultimo = null, min = Infinity, max = -Infinity;
+  for (const x of valori) {
+    if (x === null) continue;
+    if (ultimo !== null) {
+      n++;
+      if (x >= ultimo - TOLLERANZA) su++;
+      if (x <= ultimo + TOLLERANZA) giu++;
+    }
+    ultimo = x;
+    if (x < min) min = x;
+    if (x > max) max = x;
+  }
+  return { n, su, giu, ampiezza: max - min };
+}
+
+function relativoANoi(v, campo) {
+  // Il riferimento e' la riga `myself` e il suo valore e' zero; chi la precede ha valori
+  // positivi e chi la segue negativi (si ammette qualche riga fuori posto).
+  const i = v.findIndex((r) => r.mio);
+  if (i <= 0) return false;
+  const x = (r) => r[campo];
+  if (x(v[i]) === null || Math.abs(x(v[i])) > 0.0005) return false;
+  let coerenti = 0, totale = 0, lati = new Set();
+  for (let k = 0; k < v.length; k++) {
+    if (k === i || x(v[k]) === null || Math.abs(x(v[k])) <= 0.0005) continue;
+    totale++;
+    const davanti = k < i;
+    if ((davanti && x(v[k]) > 0) || (!davanti && x(v[k]) < 0)) { coerenti++; lati.add(davanti); }
+  }
+  return totale >= 2 && coerenti / totale >= 0.7 && coerenti >= 2;
+}
+
 function capireCampi(righe) {
   const v = righe
-    .map((r) => ({ pos: Number(r.pos), g: parseTempo(r.gap), d: parseTempo(r.diff) }))
+    .map((r) => ({ pos: Number(r.pos), g: parseTempo(r.gap), d: parseTempo(r.diff), gs: parseTempoFirmato(r.gap), ds: parseTempoFirmato(r.diff), mio: !!r.myself }))
     .filter((r) => Number.isFinite(r.pos))
     .sort((x, y) => x.pos - y.pos);
+  // 1) misurato da noi: lo si riconosce dal valore zero sulla nostra riga e dai segni.
+  const rel = (campo, nome) => {
+    const w = v.map((r) => ({ mio: r.mio, f: campo === "g" ? r.gs : r.ds }));
+    return relativoANoi(w.map((r) => ({ mio: r.mio, f: r.f })), "f") ? nome : null;
+  };
+  const relativo = rel("g", "cumGap") || rel("d", "cumDiff");
+  if (relativo) { ultimaScelta = relativo; return relativo; }
+
   let documento = 0; // gap cumulativo, diff intervallo
   let scambiati = 0; // diff cumulativo, gap intervallo
   let suG = 0, parG = 0, suD = 0, parD = 0;
@@ -60,14 +117,27 @@ function capireCampi(righe) {
   let scelta = null;
   if (documento >= 2 && documento > scambiati) scelta = "documento";
   else if (scambiati >= 2 && scambiati > documento) scelta = "scambiati";
-  else if (parG >= 4 && parD >= 4) {
-    // Secondo indizio: il campo cumulativo non scende quasi mai, l'intervallo si'.
-    const rG = suG / parG, rD = suD / parD;
-    if (rD >= 0.7 && rD >= rG + 0.25) scelta = "scambiati";
-    else if (rG >= 0.7 && rG >= rD + 0.25) scelta = "documento";
+  else {
+    // 2) un solo campo sempre nella stessa direzione (con segno): e' il cumulativo.
+    const aG = andamento(v.map((r) => r.gs)), aD = andamento(v.map((r) => r.ds));
+    const monotono = (a) => a.n >= 4 && a.ampiezza > 1 && Math.max(a.su, a.giu) / a.n >= 0.85;
+    if (monotono(aG) && !monotono(aD)) scelta = "cumGap";
+    else if (monotono(aD) && !monotono(aG)) scelta = "cumDiff";
+    else if (parG >= 4 && parD >= 4) {
+      // 3) secondo indizio: il campo cumulativo non scende quasi mai, l'intervallo si'.
+      const rG = suG / parG, rD = suD / parD;
+      if (rD >= 0.7 && rD >= rG + 0.25) scelta = "scambiati";
+      else if (rG >= 0.7 && rG >= rD + 0.25) scelta = "documento";
+    }
   }
   if (scelta) ultimaScelta = scelta;
   return scelta || ultimaScelta || "documento";
+}
+
+// Distanza fra due valori cumulativi (con segno), oppure null se ne manca uno.
+function differenza(a, b) {
+  if (typeof a !== "number" || typeof b !== "number") return null;
+  return Math.round(Math.abs(a - b) * 1000) / 1000;
 }
 
 /**
@@ -81,10 +151,18 @@ function pilotiDaAub(payload) {
     ? payload.full_classification_json
     : []).filter((r) => r && typeof r === "object" && Number.isFinite(Number(r.pos)));
   if (!righe.length) return [];
-  const campoIntervallo = capireCampi(righe) === "scambiati" ? "gap" : "diff";
+  const modo = capireCampi(righe);
+  const campoCumulativo = modo === "cumGap" ? "gap" : modo === "cumDiff" ? "diff" : null;
+  const campoIntervallo = modo === "scambiati" ? "gap" : "diff";
   const primo = righe.reduce((m, r) => (Number(r.pos) < Number(m.pos) ? r : m), righe[0]);
   const giriPrimo = Number(primo.laps);
   const piloti = [];
+  // Distacco cumulativo con segno di ogni riga, in ordine di classifica.
+  const ordinate = [...righe].sort((a, b) => Number(a.pos) - Number(b.pos));
+  const cumulativoDi = new Map();
+  if (campoCumulativo) ordinate.forEach((r) => cumulativoDi.set(r, parseTempoFirmato(r[campoCumulativo])));
+  const precedente = new Map();
+  ordinate.forEach((r, k) => precedente.set(r, k > 0 ? ordinate[k - 1] : null));
   for (const r of righe) {
     const pos = Number(r.pos);
     const giri = Number(r.laps);
@@ -98,7 +176,10 @@ function pilotiDaAub(payload) {
       giriRitardo: ritardo,
       migliorGiro: parseTempo(r.bestlap),
       tempoTotale: null,
-      intervallo: pos === 1 ? null : parseTempo(r[campoIntervallo]),
+      intervallo: pos === 1 ? null
+        : campoCumulativo ? differenza(cumulativoDi.get(r), cumulativoDi.get(precedente.get(r)))
+        : parseTempo(r[campoIntervallo]),
+      cumulativo: campoCumulativo && cumulativoDi.get(r) !== undefined ? cumulativoDi.get(r) : null,
     });
   }
   return piloti;
@@ -131,4 +212,4 @@ function timingDaAub(payload, richiesto) {
   return c.trovata ? { trovata: true, timing: c.timing } : { trovata: false, vuota: false };
 }
 
-module.exports = { timingDaAub, pilotiDaAub, nostroNumero, parseTempo, parseGiri, capireCampi, _reset: () => { ultimaScelta = null; } };
+module.exports = { timingDaAub, pilotiDaAub, nostroNumero, parseTempo, parseTempoFirmato, parseGiri, capireCampi, _reset: () => { ultimaScelta = null; } };
