@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=21" />
+<link rel="stylesheet" href="css/style.css?v=22" />
 </head>
 <body>
 
@@ -54,6 +54,7 @@
         <div class="lbl">DAVANTI</div>
         <span class="gap" id="timingGapAhead">—</span>
         <div class="who" id="timingWhoAhead"></div>
+        <div class="proj" id="projAhead"></div>
       </div>
       <div class="cell">
         <div class="lbl">POSIZIONE</div>
@@ -64,11 +65,21 @@
         <div class="lbl">DIETRO</div>
         <span class="gap" id="timingGapBehind">—</span>
         <div class="who" id="timingWhoBehind"></div>
+        <div class="proj" id="projBehind"></div>
       </div>
     </div>
     <div class="timing-right">
       <div class="lbl">TEMPO GARA</div>
       <span class="race-clock mono" id="raceClockDisplay">--:--:--</span>
+    </div>
+  </div>
+  <div class="passo-box" id="passoBox">
+    <div class="passo-head"><span id="passoHead">—</span><span id="passoTr"></span></div>
+    <div class="passo-tiles">
+      <div class="ptile" id="pa10"><span class="l">ULT. 10</span><b>—</b><span class="d"></span></div>
+      <div class="ptile" id="pa20"><span class="l">ULT. 20</span><b>—</b><span class="d"></span></div>
+      <div class="ptile" id="pa30"><span class="l">ULT. 30</span><b>—</b><span class="d"></span></div>
+      <div class="ptile" id="patot"><span class="l">TOTALE</span><b>—</b><span class="d"></span></div>
     </div>
   </div>
   <div class="fuel-refuel-row">
@@ -108,6 +119,7 @@
   <div class="tabs box-tabs" id="boxTabs">
     <button class="tab on" id="boxTabBtn_gara" onclick="setBoxTab('gara')">Gara</button>
     <button class="tab" id="boxTabBtn_timing" onclick="setBoxTab('timing')">Timing</button>
+    <button class="tab" id="boxTabBtn_passo" onclick="setBoxTab('passo')">Passo</button>
     <button class="tab" id="boxTabBtn_settings" onclick="setBoxTab('settings')">Impostazioni</button>
   </div>
   <div class="box-tab" id="boxTab_gara">
@@ -143,6 +155,37 @@
     <div class="row"><input type="number" id="refuelLitersInput" placeholder="Litri appena riforniti"></div>
     <div class="row"><button class="btn small" style="width:100%" onclick="doRefuel()">Rifornisci</button></div>
   </div>
+  </div>
+  <div class="box-tab" id="boxTab_passo" hidden>
+    <div class="card">
+      <h3>La mia vettura</h3>
+      <div class="row"><span class="mono" id="passoBoxHead" style="font-size:13px;">In attesa dei giri…</span></div>
+      <div class="row"><span class="mono" id="passoBoxTr" style="font-size:13px;color:var(--muted);"></span></div>
+      <div class="passo-tiles passo-tiles-box">
+        <div class="ptile" id="pb10"><span class="l">ULT. 10</span><b>—</b><span class="d"></span></div>
+        <div class="ptile" id="pb20"><span class="l">ULT. 20</span><b>—</b><span class="d"></span></div>
+        <div class="ptile" id="pb30"><span class="l">ULT. 30</span><b>—</b><span class="d"></span></div>
+        <div class="ptile" id="pbtot"><span class="l">TOTALE</span><b>—</b><span class="d"></span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Confronto con davanti e dietro (ultimi 10 giri validi)</h3>
+      <div id="passoCmpBox" class="mono" style="font-size:13px;line-height:1.7;">—</div>
+    </div>
+    <div class="card">
+      <h3>Ultimi giri</h3>
+      <div id="passoGiriBox" class="mono passo-giri">—</div>
+    </div>
+    <div class="card">
+      <h3>Tutte le vetture</h3>
+      <div id="passoTabellaBox" class="passo-tabella">—</div>
+    </div>
+    <div class="card">
+      <h3>Storico</h3>
+      <div class="row"><span class="mono" id="passoStoricoInfo" style="font-size:12px;color:var(--muted);line-height:1.4;">—</span></div>
+      <div class="row"><button class="btn small" style="width:100%" onclick="passoAzzera()">Azzera lo storico dei giri</button></div>
+      <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);line-height:1.4;">Giro valido: non oltre l'8% dal miglior giro. Trend: due giri validi di fila oltre &plusmn;0,25 s dalla base. Lo storico si ricostruisce da solo dopo un riavvio del server, se questo telefono resta collegato.</span></div>
+    </div>
   </div>
   <div class="box-tab" id="boxTab_timing" hidden>
   <!-- Timer di partenza e di gara mostrati sull'auto, + modalita' test accelerato -->
@@ -214,6 +257,11 @@
     <div class="row seg" id="timingViewSeg">
       <button class="btn seg-btn" id="segViewAss" onclick="setTimingView('assoluta')">Assoluta</button>
       <button class="btn seg-btn" id="segViewCat" onclick="setTimingView('categoria')">Categoria</button>
+    </div>
+    <div class="row" style="justify-content:flex-start;"><span class="mono" style="font-size:12px;color:var(--muted);">Schermata auto:</span></div>
+    <div class="row seg" id="autoLayoutSeg">
+      <button class="btn seg-btn" id="segLayTel" onclick="setAutoLayout('telefono')">Telefono</button>
+      <button class="btn seg-btn" id="segLayTab" onclick="setAutoLayout('tablet')">Tablet</button>
     </div>
 
     <!-- ---- sorgente: classifica AUB ---- -->
@@ -346,16 +394,17 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=20"></script>
-<script src="js/push.js?v=20"></script>
-<script src="js/connection.js?v=20"></script>
-<script src="js/autoview.js?v=20"></script>
-<script src="js/fuel.js?v=20"></script>
-<script src="js/boxview.js?v=20"></script>
-<script src="js/timing.js?v=20"></script>
-<script src="js/race.js?v=20"></script>
-<script src="js/timer.js?v=20"></script>
-<script src="js/install.js?v=20"></script>
-<script src="js/app.js?v=20"></script>
+<script src="js/core.js?v=22"></script>
+<script src="js/push.js?v=22"></script>
+<script src="js/connection.js?v=22"></script>
+<script src="js/autoview.js?v=22"></script>
+<script src="js/fuel.js?v=22"></script>
+<script src="js/boxview.js?v=22"></script>
+<script src="js/timing.js?v=22"></script>
+<script src="js/passo.js?v=22"></script>
+<script src="js/race.js?v=22"></script>
+<script src="js/timer.js?v=22"></script>
+<script src="js/install.js?v=22"></script>
+<script src="js/app.js?v=22"></script>
 </body>
 </html>
