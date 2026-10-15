@@ -113,9 +113,14 @@
     border-bottom:1px solid var(--line);gap:clamp(20px,6vw,60px);
   }
   .timing-strip .gap, .timing-strip .pos{font-size:clamp(28px,5vw,44px);font-weight:700;line-height:1;height:1.15em;display:flex;align-items:center;justify-content:center;}
-  .timing-strip .gap{color:var(--yellow);font-size:clamp(26px,4.4vw,38px);}
+  /* Distacchi: bianchi finche' non cambiano; poi verde se la situazione migliora
+     (davanti si riduce, dietro aumenta) e giallo se peggiora. */
+  .timing-strip .gap{color:var(--text);font-size:clamp(26px,4.4vw,38px);transition:color .3s;}
+  .timing-strip .gap.g-up{color:var(--green);}
+  .timing-strip .gap.g-down{color:var(--yellow);}
   .timing-strip .lbl{font-size:13px;letter-spacing:.1em;color:var(--muted);}
-  .timing-strip .pos{color:var(--text);}
+  .timing-strip .pos{color:#fff;}
+  body.night #autoView .timing-strip .pos{color:var(--text);}
   .timing-strip .cell{min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;}
   .timing-strip .cell .lbl{height:16px;line-height:16px;white-space:nowrap;}
   .timing-strip .cell .who, .timing-strip .cell .sub{min-height:14px;text-align:center;}
@@ -161,6 +166,78 @@
     position:fixed;inset:0;background:var(--bg);color:var(--text);display:flex;
     flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:60;
   }
+
+  /* ---------- AUTO: versione tablet (griglia 8x8, scelta dal box) ---------- */
+  #autoView .proj, #autoView .passo-box{display:none;}
+  #autoView.layout-tablet{
+    display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));
+    gap:8px;padding:8px;
+  }
+  #autoView.layout-tablet .timing-strip,
+  #autoView.layout-tablet .fuel-refuel-row,
+  #autoView.layout-tablet .passo-box{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  }
+  #autoView.layout-tablet #timerStartBanner{grid-area:1/1/4/9;padding:0;}
+  #autoView.layout-tablet .timing-strip.split{display:contents;}
+  #autoView.layout-tablet .timing-right{
+    grid-area:1/1/2/9;border:1px solid var(--line);border-radius:12px;background:var(--panel);
+    padding:0 16px;flex-direction:row;align-items:center;justify-content:center;gap:18px;
+  }
+  #autoView.layout-tablet .timing-right .lbl{font-size:min(1.5vw,2.4vh);}
+  #autoView.layout-tablet .race-clock{font-size:min(6.2vw,9.4vh);}
+  #autoView.layout-tablet .timing-left{
+    grid-area:2/1/4/9;max-width:none;align-items:center;
+    border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 12px;
+  }
+  #autoView.layout-tablet .timing-strip .cell{gap:min(.6vh,6px);}
+  #autoView.layout-tablet .timing-strip .gap{font-size:min(5vw,8vh);}
+  #autoView.layout-tablet .timing-strip .pos{font-size:min(7vw,11vh);}
+  #autoView.layout-tablet .timing-strip .lbl{font-size:min(1.3vw,2.2vh);height:auto;line-height:1.2;}
+  #autoView.layout-tablet .timing-strip .who{font-size:min(1.9vw,3.2vh);}
+  #autoView.layout-tablet .timing-strip .sub{font-size:min(1.4vw,2.3vh);}
+  #autoView.layout-tablet .proj{display:block;font-size:min(1.45vw,2.3vh);color:var(--muted);text-align:center;min-height:1.2em;font-weight:500;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+  #autoView.layout-tablet .proj.p-buono{color:var(--green);}
+  #autoView.layout-tablet .proj.p-cattivo{color:var(--yellow);}
+  #autoView.layout-tablet .passo-box{
+    grid-area:4/1/6/6;display:flex;flex-direction:column;gap:6px;padding:8px;min-width:0;
+  }
+  #autoView.layout-tablet .fuel-refuel-row{
+    grid-area:4/6/6/9;flex-direction:column;justify-content:center;align-items:stretch;gap:0;padding:8px 12px;
+  }
+  #autoView.layout-tablet .refuel-btn{display:none;}
+  #autoView.layout-tablet .fuel-track{height:min(9vw,11vh);border-radius:10px;}
+  #autoView.layout-tablet .fuel-pct{font-size:min(4.2vw,6.6vh);}
+  #autoView.layout-tablet .fuel-autonomy{font-size:min(1.9vw,3.2vh);text-align:center;white-space:nowrap;margin-top:min(1.2vh,10px);}
+  #autoView.layout-tablet .quick-grid{grid-area:6/1/9/9;padding:0;gap:8px;}
+  #autoView.layout-tablet .quick-btn{font-size:min(2.8vw,5vh);border-radius:14px;min-width:0;padding:4px;}
+
+  /* Passo: testata e quattro tessere (ultimi 10, 20, 30 giri e totale). */
+  .passo-head{display:flex;justify-content:space-between;gap:10px;font-family:'JetBrains Mono',monospace;font-size:min(1.4vw,2.3vh);color:var(--muted);white-space:nowrap;}
+  .passo-head span:first-child{overflow:hidden;text-overflow:ellipsis;min-width:0;}
+  .passo-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:1;min-height:0;}
+  .ptile{background:var(--panel-2);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;min-width:0;}
+  .ptile .l{font-size:min(1.25vw,2.1vh);color:var(--muted);letter-spacing:.08em;}
+  .ptile b{font-family:'JetBrains Mono',monospace;font-size:min(2.8vw,4.6vh);line-height:1.1;white-space:nowrap;}
+  .ptile .d{font-family:'JetBrains Mono',monospace;font-size:min(1.6vw,2.7vh);color:var(--muted);}
+  .ptile.pt-up b, .ptile.pt-up .d{color:var(--green);}
+  .ptile.pt-down b, .ptile.pt-down .d{color:var(--red);}
+  .ptile.pt-eq b{color:var(--text);}
+  .passo-tiles-box{gap:6px;margin-top:6px;}
+  .passo-tiles-box .ptile{padding:8px 2px;}
+  .passo-tiles-box .ptile .l{font-size:10px;}
+  .passo-tiles-box .ptile b{font-size:15px;}
+  .passo-tiles-box .ptile .d{font-size:12px;}
+  .passo-giri{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;}
+  .passo-giri span{background:var(--panel-2);border-radius:6px;padding:3px 7px;}
+  .passo-giri span.nv{color:var(--muted);text-decoration:line-through;}
+  .passo-tabella{max-height:340px;overflow:auto;}
+  .passo-tabella table{width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px;}
+  .passo-tabella th{position:sticky;top:0;background:var(--panel);color:var(--muted);font-weight:500;text-align:right;padding:4px 6px;}
+  .passo-tabella td{text-align:right;padding:4px 6px;border-top:1px solid var(--line);}
+  .passo-tabella th:first-child, .passo-tabella td:first-child{text-align:left;}
+  .passo-tabella tr.mia td{color:var(--yellow);font-weight:700;}
+  .passo-tabella .up{color:var(--green);} .passo-tabella .down{color:var(--red);} .passo-tabella .eq{color:var(--muted);}
 
   /* ---------- BOX VIEW ---------- */
   #boxView{min-height:100dvh;padding:18px 16px 60px;max-width:640px;margin:0 auto;}
