@@ -175,6 +175,7 @@ function pilotiDaAub(payload) {
       giri: Number.isFinite(giri) ? giri : null,
       giriRitardo: ritardo,
       migliorGiro: parseTempo(r.bestlap),
+      ultimoGiro: parseTempo(r.laptime),
       tempoTotale: null,
       intervallo: pos === 1 ? null
         : campoCumulativo ? differenza(cumulativoDi.get(r), cumulativoDi.get(precedente.get(r)))

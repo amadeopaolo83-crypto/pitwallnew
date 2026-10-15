@@ -12,7 +12,8 @@
 const { AUB_URL, AUB_USER, AUB_PASS } = require("./config");
 const { getRoomState } = require("./rooms");
 const aubtimer = require("./aubtimer");
-const { timingDaAub, capireCampi } = require("./aubclassifica");
+const { timingDaAub, capireCampi, pilotiDaAub, nostroNumero } = require("./aubclassifica");
+const passo = require("./passo");
 
 // L'istanza socket.io la crea server.js: gliela facciamo passare all'avvio
 // invece di importarla, cosi' non si crea un ciclo fra i moduli.
@@ -204,6 +205,7 @@ function chiediClassifica(code, numero) {
     try {
       const payload = await aubGetJson(code, "/classifica", "classifica");
       if (aubClassifica.get(code) !== c) return; // collegamento fermato nel frattempo
+      passoDaClassifica(code, payload, c.numero);
       const t = timingDaAub(payload, c.numero);
       if (t.trovata) {
         c.ultimoOk = Date.now();
@@ -219,6 +221,33 @@ function chiediClassifica(code, numero) {
       c.inCorso = false;
     }
   }, attesa);
+}
+
+// Giri e passo: servono ultimo giro e miglior giro di ogni vettura, che stanno nella
+// classifica intera (il flusso, senza il numero, non manda l'ultimo giro).
+function passoDaClassifica(code, payload, numero) {
+  try {
+    const piloti = pilotiDaAub(payload);
+    if (piloti.length) passo.registra(code, piloti, nostroNumero(payload, numero));
+  } catch (e) { /* il passo non deve fermare i distacchi */ }
+}
+
+const OGNI_PASSO_MS = Number(process.env.PASSO_OGNI_MS) || 10000; // la variabile serve solo ai test
+
+// Una lettura della classifica intera ogni 10 s per il passo, saltata se ne e' appena
+// arrivata una (la stessa che serve ai distacchi di categoria) o se una e' in corso.
+async function aubPassoLoop(code, link, driverId) {
+  while (!link.stopped) {
+    await new Promise((r) => setTimeout(r, OGNI_PASSO_MS));
+    if (link.stopped) break;
+    const c = aubClassifica.get(code);
+    if (c && (c.inCorso || (c.ultimo && Date.now() - c.ultimo < OGNI_PASSO_MS - 2000))) continue;
+    try {
+      const payload = await aubGetJson(code, "/classifica", "classifica");
+      if (link.stopped) break;
+      passoDaClassifica(code, payload, driverId);
+    } catch (e) { /* si riprova al giro dopo */ }
+  }
 }
 
 function fermaClassifica(code) {
@@ -361,6 +390,7 @@ function aubStart(code, driverId, credenziali) {
     error: null,
   });
   aubLoop(code, link, driverId);
+  aubPassoLoop(code, link, driverId);
 }
 
 module.exports = {

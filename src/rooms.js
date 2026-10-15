@@ -27,6 +27,7 @@ function getRoomState(code) {
       ],
       timing: null, // { position, gapAhead, gapBehind, updatedAt }
       timingView: "assoluta", // cosa mostra l'auto: "assoluta" o "categoria"
+      autoLayout: "telefono", // aspetto della schermata auto: "telefono" (predefinito) o "tablet"
       lastFlash: null,
       // Messaggi dall'auto, i piu' recenti: li riceve chi si ricollega (per esempio
       // il box dopo che lo schermo e' stato spento). Si perdono con un riavvio del server.
@@ -99,7 +100,7 @@ function getRoomState(code) {
       },
       // true finche' nessun dispositivo ha rimandato i propri valori dopo un
       // riavvio del server; si spegne da solo, una voce alla volta.
-      fresh: { fuel: true, buttons: true, race: true, ponte: true, timerSrc: true, aub: true },
+      fresh: { fuel: true, buttons: true, race: true, ponte: true, timerSrc: true, aub: true, layout: true },
     });
   }
   return rooms.get(code);

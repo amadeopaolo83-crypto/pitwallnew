@@ -8,6 +8,7 @@ const { notifyBoxDevices } = require("./push");
 const aub = require("./aub");
 const aubtimer = require("./aubtimer");
 const ponte = require("./ponte");
+const passo = require("./passo");
 const keepalive = require("./keepalive");
 
 // Tempo rimanente "vero" in questo istante, dato l'ultimo valore salvato
@@ -176,6 +177,31 @@ function registra(io) {
       if (!joinedCode || (view !== "assoluta" && view !== "categoria")) return;
       getRoomState(joinedCode).timingView = view;
       io.to(joinedCode).emit("timingViewUpdate", { view });
+    });
+
+    // BOX -> AUTO: aspetto della schermata auto, "telefono" (predefinito) o "tablet"
+    socket.on("autoLayoutUpdate", ({ layout } = {}) => {
+      if (!joinedCode || (layout !== "telefono" && layout !== "tablet")) return;
+      const state = getRoomState(joinedCode);
+      state.autoLayout = layout;
+      state.fresh.layout = false;
+      io.to(joinedCode).emit("autoLayoutUpdate", { layout });
+    });
+
+    // Passo gara: riepilogo e storico dei giri della nostra vettura (chi si collega o si
+    // ricollega li chiede), copia ripristinata dal box e azzeramento.
+    socket.on("passoRequest", (ack) => {
+      if (!joinedCode || typeof ack !== "function") return;
+      ack({ ok: true, riepilogo: passo.riepilogo(joinedCode), storico: passo.storico(joinedCode) });
+    });
+    socket.on("passoRestore", (dati, ack) => {
+      if (!joinedCode) return;
+      const r = passo.ripristina(joinedCode, dati);
+      if (typeof ack === "function") ack(r);
+    });
+    socket.on("passoAzzera", () => {
+      if (!joinedCode) return;
+      passo.azzera(joinedCode);
     });
 
     // BOX -> AUTO: distacchi dal live timing (posizione, distacco davanti, distacco dietro)

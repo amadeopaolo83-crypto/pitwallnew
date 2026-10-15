@@ -14,10 +14,11 @@
 //
 // Formato della classifica che arriva dal ponte (campi usati):
 //   sessione: { tipo: "qualifica" | "gara", nome, categoria, bandiera }
-//   piloti:   [{ pos, numero, nome, classe, giri, giriRitardo, migliorGiro, tempoTotale, intervallo }]
+//   piloti:   [{ pos, numero, nome, classe, giri, giriRitardo, migliorGiro, ultimoGiro, tempoTotale, intervallo }]
 //   con i tempi in secondi.
 
 const { getRoomState } = require("./rooms");
+const passo = require("./passo");
 const { BRIDGE_URL, BRIDGE_TOKEN } = require("./config");
 
 const OGNI_MS = 2500;
@@ -245,6 +246,8 @@ function applica(code, link, r) {
     return;
   }
   setStatus(code, { ...comune, status: "in ascolto", updatedAt: Date.now() });
+  // Giri e passo: stessa lettura, calcoli in passo.js.
+  try { passo.registra(code, piloti, link.numero); } catch (e) { /* il passo non deve fermare i distacchi */ }
   // Si rimanda ai telefoni solo quando qualcosa e' cambiato.
   const state = getRoomState(code);
   const prima = state.timing;
