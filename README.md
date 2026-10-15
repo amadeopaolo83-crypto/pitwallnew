@@ -26,6 +26,7 @@ pitcomm/
 │   ├── push.js             notifiche push al box
 │   ├── aub.js              collegamento alla classifica AUBServer
 │   ├── ponte.js            distacchi letti dal nostro ponte (PitPonte)
+│   ├── passo.js            giri, giri validi e trend di passo di ogni vettura
 │   └── keepalive.js        tiene sveglio il server durante la gara
 └── public/                 l'app che si apre sul telefono
     ├── index.html
@@ -46,6 +47,7 @@ pitcomm/
         ├── fuel.js         carburante e consumo
         ├── boxview.js      pannello del box
         ├── timing.js       distacchi (classifica / manuali)
+        ├── passo.js        passo gara: medie, trend, copia dei giri sul box
         ├── race.js         Avvio gara / Fine gara
         ├── install.js      pulsante "Installa l'app"
         └── app.js          avvio e riconnessione (caricato per ultimo)
@@ -253,6 +255,39 @@ motocross. Per qualifiche e prove il distacco è la differenza fra i migliori gi
 in gara usa l'intervallo che il sito calcola già. In gara controlla subito che
 posizione e vetture davanti e dietro abbiano senso, e se qualcosa non torna passa a
 **Manuali** e segnalalo.
+
+---
+
+## 6b. Passo gara, colori dei distacchi e schermata tablet
+
+**Colori sull'auto** (telefono e tablet): i distacchi sono bianchi finché non cambiano.
+Il distacco da chi sta *davanti* diventa verde se si riduce e giallo se aumenta; quello da
+chi sta *dietro* è verde se aumenta e giallo se si riduce. Cambia colore solo con una
+differenza di almeno 0,1 s; con un avversario nuovo riparte da bianco. La posizione è bianca.
+
+**Schermata tablet:** dal box, scheda *Timing → Schermata auto*, si sceglie *Telefono*
+(predefinito) o *Tablet*. Vale per tutta la squadra e si ricorda dopo un riavvio del server
+(se il box è collegato). Il tablet usa una griglia 8x8: timer in riga 1, distacchi con la
+proiezione dei giri nelle righe 2-3, trend in A4-E5, carburante e autonomia in F4-H5, tutti
+i tasti rapidi nelle righe 6-8.
+
+**Passo (scheda *Passo* sul box):** per ogni vettura si usano solo numero, categoria, giri,
+miglior giro e ultimo giro, che arrivano sia da Aub diretto sia dal ponte.
+- *Giro valido*: non oltre l'8% dal miglior giro della vettura (restano fuori safety car,
+  bandiere gialle, ingresso e uscita box). La soglia è `SOGLIA` in `src/passo.js`.
+- *Altre vetture*: si tengono best, giri e gli ultimi 10 giri validi. Trend: base = media dei
+  primi 5 giri validi; ogni giro valido più veloce di 0,25 s è un «+», più lento un «−»,
+  dentro la tolleranza uno «0». Due segni uguali di fila convalidano il trend e la base
+  diventa la media degli ultimi 10 giri validi; «+−» non cambia nulla. Cinque «0» di fila =
+  passo stabile.
+- *La nostra vettura*: si tengono tutti i giri (fino a 3000 o 72 ore). Medie degli ultimi
+  10, 20 e 30 giri validi contro i precedenti altrettanti, e media totale (seconda metà contro
+  prima metà). Una pausa di oltre 20 minuti apre uno stint nuovo e le finestre ripartono.
+- *Confronto*: con la media a 10 giri tua e di chi hai davanti/dietro, e il distacco, il tablet
+  mostra quanto recuperi o perdi a giro e fra quanti giri lo prendi o ti prende.
+- *Memoria*: lo storico sta nel server e, in copia, sul telefono del box (si rimanda al server
+  se questo riparte). «Azzera lo storico» lo cancella ovunque. Con Aub diretto serve l'ambito
+  *classifica* sulla chiave: l'ultimo giro si legge dalla classifica intera, una volta ogni 10 s.
 
 ---
 
