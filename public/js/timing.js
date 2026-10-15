@@ -48,6 +48,15 @@ function setTimingView(view){
   if(socket && socket.connected) socket.emit('timingViewUpdate', { view: v });
 }
 
+// Scelta dell'aspetto della schermata auto (telefono o tablet): la fa il box, vale per
+// tutta la squadra e si ricorda su questo dispositivo per dopo un riavvio del server.
+function setAutoLayout(layout){
+  const l = layout === 'tablet' ? 'tablet' : 'telefono';
+  try{ localStorage.setItem('pc_auto_layout', l); }catch(e){}
+  applyAutoLayout(l);
+  if(socket && socket.connected) socket.emit('autoLayoutUpdate', { layout: l });
+}
+
 function applyTimingView(view){
   timingView = view === 'categoria' ? 'categoria' : 'assoluta';
   if($('segViewAss')) $('segViewAss').classList.toggle('active', timingView === 'assoluta');

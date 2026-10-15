@@ -110,6 +110,16 @@ function restoreIntoFreshServer(state){
     }
   }
 
+  // Aspetto della schermata auto: lo ricorda il box.
+  if(fresh.layout && role === 'box'){
+    let l = null;
+    try{ l = localStorage.getItem('pc_auto_layout'); }catch(e){}
+    if(l === 'tablet' || l === 'telefono'){
+      state.autoLayout = l;
+      socket.emit('autoLayoutUpdate', { layout: l });
+    }
+  }
+
   // Lettura dal nostro ponte: se stava andando, riparte.
   if(fresh.ponte){
     const f = load('pc_ponte', null);
@@ -139,6 +149,7 @@ function applyState(state){
   }
   renderFuel(state.fuel.percent);
   applyTimingView(state.timingView || 'assoluta');
+  applyAutoLayout(state.autoLayout || 'telefono');
   if(state.timing) renderTiming(state.timing);
   if(state.aub) renderAubStatus(state.aub);
   if(state.ponte) renderPonteStatus(state.ponte);
@@ -150,6 +161,7 @@ function applyState(state){
   renderFlashEditor();
   renderFuelSystemUI();
   resumeFuelTicking();
+  passoAlCollegamento();
 }
 
 function registerListeners(){
@@ -169,6 +181,14 @@ function registerListeners(){
   socket.on('raceStatus', renderRace);
   socket.on('timingUpdate', renderTiming);
   socket.on('timingViewUpdate', (v) => applyTimingView(v.view));
+  socket.on('autoLayoutUpdate', (v) => applyAutoLayout(v.layout));
+  socket.on('passoUpdate', passoRicevi);
+  socket.on('passoAzzerato', () => {
+    passoLocale = { numero: passoLocale.numero, giri: [] };
+    try{ localStorage.removeItem(PASSO_KEY); }catch(e){}
+    passoRis = null;
+    passoRender();
+  });
   socket.on('aubStatus', renderAubStatus);
   socket.on('ponteStatus', renderPonteStatus);
   socket.on('timerUpdate', applyTimerState);

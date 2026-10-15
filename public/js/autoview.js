@@ -44,9 +44,11 @@ let lastTiming = null;
 function renderTiming(t){
   if(!t) return;
   lastTiming = t;
-  // Se la fonte non conosce la categoria (AUB, inserimento manuale) si resta sull'assoluta.
+  // Se la fonte non conosce la categoria (inserimento manuale) si resta sull'assoluta.
   const cat = timingView === 'categoria' && t.catName;
   const pos = cat ? t.catPosition : t.position;
+  coloraGap('Ahead', cat ? t.catGapAhead : t.gapAhead, timingView + '|' + (cat ? t.catNumberAhead : t.numberAhead));
+  coloraGap('Behind', cat ? t.catGapBehind : t.gapBehind, timingView + '|' + (cat ? t.catNumberBehind : t.numberBehind));
   const gapA = cat ? t.catGapAhead : t.gapAhead;
   const gapB = cat ? t.catGapBehind : t.gapBehind;
   if($('timingPos')) $('timingPos').textContent = (pos ?? '—');
@@ -63,6 +65,42 @@ function renderTiming(t){
       : cat ? t.catName + ' \u00b7 ass. ' + (t.position ?? '\u2014') + '\u00b0'
             : t.catName + ' ' + (t.catPosition ?? '\u2014') + '\u00b0';
   }
+  if(typeof passoRenderConfronti === 'function') passoRenderConfronti();
+}
+
+// Colore dei distacchi: bianco finche' non cambiano, poi verde se la situazione
+// migliora (il distacco da chi sta davanti si riduce, quello da chi sta dietro
+// aumenta) e giallo se peggiora. Si confronta con l'ultimo valore che ha fatto
+// cambiare colore, con una soglia per non seguire i centesimi; un avversario nuovo
+// (o una vista diversa) riparta da bianco.
+const gapStato = { Ahead: { key: null, ref: null, dir: null }, Behind: { key: null, ref: null, dir: null } };
+const SOGLIA_GAP_COLORE = 0.1; // secondi
+
+function coloraGap(lato, testo, chiave){
+  const el = $(lato === 'Ahead' ? 'timingGapAhead' : 'timingGapBehind');
+  if(!el) return;
+  const s = (typeof passoSecDaGap === 'function') ? passoSecDaGap(testo) : null;
+  const st = gapStato[lato];
+  if(s == null || st.key !== chiave){
+    st.key = s == null ? null : chiave; st.ref = s; st.dir = null;
+  } else if(Math.abs(s - st.ref) > SOGLIA_GAP_COLORE){
+    st.dir = s < st.ref ? 'shrink' : 'grow';
+    st.ref = s;
+  }
+  const buono = (lato === 'Ahead') === (st.dir === 'shrink');
+  el.classList.toggle('g-up', Boolean(st.dir) && buono);
+  el.classList.toggle('g-down', Boolean(st.dir) && !buono);
+}
+
+// Aspetto della schermata auto, scelto dal box: "telefono" (predefinito) o "tablet".
+let autoLayout = 'telefono';
+function applyAutoLayout(layout){
+  autoLayout = layout === 'tablet' ? 'tablet' : 'telefono';
+  if($('autoView')) $('autoView').classList.toggle('layout-tablet', autoLayout === 'tablet');
+  if($('segLayTel')) $('segLayTel').classList.toggle('active', autoLayout === 'telefono');
+  if($('segLayTab')) $('segLayTab').classList.toggle('active', autoLayout === 'tablet');
+  renderQuickGrid();
+  if(typeof passoRender === 'function') passoRender();
 }
 
 // Il secondo pulsante (di solito "Rifornimento") sta a destra della barra
@@ -72,7 +110,9 @@ function renderQuickGrid(){
   if(!grid) return;
   grid.innerHTML = '';
   quickButtons.forEach((b, i) => {
-    if(i === 1) return; // va nel pulsante accanto al carburante, non qui
+    // Sul telefono il secondo va nel pulsante accanto al carburante; sul tablet stanno
+    // tutti insieme nella griglia in basso.
+    if(i === 1 && autoLayout !== 'tablet') return;
     const btn = document.createElement('button');
     btn.className = 'quick-btn';
     btn.style.background = b.color;
