@@ -4,7 +4,7 @@
 // numero, classe, giri completati, miglior giro e ultimo giro. Niente dei calcoli di
 // trend che fanno i fornitori.
 //
-//  - Giro VALIDO: non piu' lento del miglior giro della vettura + SOGLIA (8%) (safety car,
+//  - Giro VALIDO: non il primo giro, e non piu' lento del miglior giro + SOGLIA (8%) (safety car,
 //    bandiera gialla, ingresso e uscita dai box restano fuori).
 //  - Altre vetture: si tengono best, giri e solo gli ultimi 10 giri validi.
 //  - La nostra: si tengono tutti i giri (potati dopo 72 h o oltre 3000 giri).
@@ -109,7 +109,8 @@ function registraGiro(v, n, t, ts) {
   if (v.ultimoTs != null && ts - v.ultimoTs > PAUSA_MS) { v.stint++; nuovoStint(v); stintNuovo = true; }
   v.ultimoTs = ts;
   if (v.best == null || t < v.best) { v.best = t; v.bestN = n; }
-  const valido = t <= v.best * (1 + SOGLIA);
+  // Il primo giro (partenza, traffico, gomme fredde) non conta mai.
+  const valido = n > 1 && t <= v.best * (1 + SOGLIA);
   if (valido) aggiungiValido(v, t);
   return { n, t: arrotonda(t), ts, v: valido, s: v.stint, nuovoStint: stintNuovo };
 }

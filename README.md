@@ -273,7 +273,7 @@ i tasti rapidi nelle righe 6-8.
 
 **Passo (scheda *Passo* sul box):** per ogni vettura si usano solo numero, categoria, giri,
 miglior giro e ultimo giro, che arrivano sia da Aub diretto sia dal ponte.
-- *Giro valido*: non oltre l'8% dal miglior giro della vettura (restano fuori safety car,
+- *Giro valido*: non il primo giro e non oltre l'8% dal miglior giro della vettura (restano fuori safety car,
   bandiere gialle, ingresso e uscita box). La soglia è `SOGLIA` in `src/passo.js`.
 - *Altre vetture*: si tengono best, giri e gli ultimi 10 giri validi. Trend: base = media dei
   primi 5 giri validi; ogni giro valido più veloce di 0,25 s è un «+», più lento un «−»,
