@@ -142,6 +142,7 @@ function registra(code, piloti, numero, ora = Date.now()) {
     let v = S.auto.get(num_);
     if (!v) { v = nuovaVettura(num_, r.classe); S.auto.set(num_, v); }
     v.classe = r.classe || v.classe;
+    v.pos = num(r.pos);
     const giri = num(r.giri);
     const ultimo = num(r.ultimoGiro);
     const best = num(r.migliorGiro);
@@ -226,7 +227,7 @@ function riepilogo(code) {
   for (const [n, v] of S.auto) {
     if (n === S.numero) continue;
     auto[n] = {
-      b: arrotonda(v.best), g: v.giri,
+      p: v.pos ?? null, b: arrotonda(v.best), g: v.giri,
       m10: v.valid.length >= 3 ? arrotonda(media(v.valid)) : null,
       n: v.valid.length, tr: v.tr,
     };
@@ -235,7 +236,7 @@ function riepilogo(code) {
     numero: S.numero || null,
     ts: Date.now(),
     mio: mio ? {
-      giri: mio.giri, ultimo: mio.ultimo, best: arrotonda(mio.best), bestN: mio.bestN,
+      pos: mio.pos ?? null, giri: mio.giri, ultimo: mio.ultimo, best: arrotonda(mio.best), bestN: mio.bestN,
       m: finestre(S), tr: mio.tr, nGiri: S.giri.length,
     } : null,
     auto,

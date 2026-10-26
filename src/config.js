@@ -34,7 +34,19 @@ const SELF_URL = (process.env.RENDER_EXTERNAL_URL || process.env.SELF_URL || "")
 const BRIDGE_URL = (process.env.BRIDGE_URL || "").replace(/\/+$/, "");
 const BRIDGE_TOKEN = process.env.BRIDGE_TOKEN || "";
 
+// Dove si salvano le impostazioni della squadra (serbatoio, tasti, ecc.) perche'
+// restino anche dopo un riavvio. Il disco di Render gratuito si cancella a ogni
+// riavvio, quindi serve un posto fuori: Upstash Redis (gratuito) con i suoi due
+// valori REST, oppure una cartella su un disco vero (DATA_DIR). Senza nessuno dei
+// due le impostazioni stanno solo in memoria e nelle copie dei telefoni.
+const ARCHIVIO_URL = (process.env.UPSTASH_REDIS_REST_URL || "").replace(/\/+$/, "");
+const ARCHIVIO_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || "";
+const DATA_DIR = process.env.DATA_DIR || "";
+
 module.exports = {
+  ARCHIVIO_URL,
+  ARCHIVIO_TOKEN,
+  DATA_DIR,
   PORT,
   VAPID_PUBLIC_KEY,
   VAPID_PRIVATE_KEY,

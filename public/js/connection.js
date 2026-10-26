@@ -68,7 +68,14 @@ function restoreIntoFreshServer(state){
 
   if(fresh.fuel){
     const saved = load('pc_fuel', null);
-    if(saved && saved.fs && saved.code === code && (Date.now() - saved.at) < FUEL_LOCAL_MAX_MS){
+    if(saved && saved.fs && saved.code === code){
+      // Capienza e consumo restano buoni per sempre; il conteggio "in pista" solo
+      // per la durata di una gara: oltre, e' roba di un'altra sessione.
+      if((Date.now() - saved.at) >= FUEL_LOCAL_MAX_MS && saved.fs.onTrack){
+        saved.fs.currentLiters = Math.min(saved.fs.sessionStartLiters || saved.fs.tankCapacityLiters, saved.fs.tankCapacityLiters);
+        saved.fs.onTrack = false;
+        saved.fs.sessionStartAt = null;
+      }
       fuelSystem = saved.fs;
       state.fuelSystem = saved.fs;
       socket.emit('fuelSystemUpdate', saved.fs);
@@ -139,6 +146,21 @@ function applyState(state){
     quickButtons = state.quickButtons;
     if(!fresh.buttons) save('pc_qb', quickButtons);
   }
+  if(role === 'box'){
+    // Messaggi a comparsa: quelli del server; se il server non li ha ancora, si
+    // mandano i propri.
+    if(Array.isArray(state.flashPresets) && state.flashPresets.length){
+      flashPresets = state.flashPresets;
+      save('pc_flash', flashPresets);
+    } else if(localStorage.getItem('pc_flash')){
+      socket.emit('flashPresetsUpdate', { presets: flashPresets });
+    }
+    // Ultimi indirizzi dei collegamenti (mai le password): riempiono i campi se vuoti.
+    const c = state.collegamenti || {};
+    const metti = (k, v) => { try{ if(v && !localStorage.getItem(k)) localStorage.setItem(k, v); }catch(e){} };
+    if(c.aub){ metti('pc_aub_driver', c.aub.driverId); metti('pc_aub_url', c.aub.url); metti('pc_aub_user', c.aub.user); }
+    if(c.ponte){ metti('pc_ponte_url', c.ponte.url); metti('pc_ponte_num', c.ponte.number); }
+  }
   document.body.classList.toggle('night', !state.dayMode);
   if($('dayModeToggle')) $('dayModeToggle').checked = !state.dayMode;
   if(state.fuelSystem){
@@ -177,6 +199,7 @@ function registerListeners(){
   });
   socket.on('fuelSystemUpdate', (fs) => { fuelSystem = fs; saveFuelLocal(); renderFuelSystemUI(); resumeFuelTicking(); });
   socket.on('dayModeUpdate', (d) => { document.body.classList.toggle('night', !d.dayMode); if($('dayModeToggle')) $('dayModeToggle').checked = !d.dayMode; });
+  socket.on('flashPresetsUpdate', (f) => { if(role === 'box' && f && Array.isArray(f.presets) && f.presets.length){ flashPresets = f.presets; save('pc_flash', flashPresets); renderFlashEditor(); } });
   socket.on('quickButtonsUpdate', (q) => { quickButtons = q.buttons; save('pc_qb', quickButtons); renderQuickGrid(); renderQbEditor(); });
   socket.on('raceStatus', renderRace);
   socket.on('timingUpdate', renderTiming);

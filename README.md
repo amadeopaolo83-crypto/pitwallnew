@@ -22,6 +22,7 @@ pitcomm/
 │   ├── config.js           variabili d'ambiente
 │   ├── static.js           serve la cartella public/
 │   ├── rooms.js            stato di ogni team in memoria
+│   ├── archivio.js         impostazioni della squadra salvate fuori dal server
 │   ├── sockets.js          messaggi tra box e auto
 │   ├── push.js             notifiche push al box
 │   ├── aub.js              collegamento alla classifica AUBServer
@@ -91,6 +92,7 @@ Controllo: nella radice del repository devi vedere `src`, `public`,
    | `VAPID_PRIVATE_KEY` | dal file `chiavi-render-NON-CARICARE-SU-GITHUB.txt` |
    | `AUB_URL`, `AUB_USER`, `AUB_PASS` | il server classifica (vedi «Distacchi da AUB» qui sotto): `AUB_URL=https://racedata.ingangeloni.com`, `AUB_USER` una parola qualsiasi, `AUB_PASS` la chiave della squadra |
    | `BRIDGE_URL`, `BRIDGE_TOKEN` | indirizzo del ponte e parola d'ordine (vedi il README del ponte) |
+   | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | dove si salvano le impostazioni della squadra (vedi «Impostazioni salvate» qui sotto) |
 
    Senza chiavi il server parte lo stesso, ma le notifiche restano spente.
 4. **Create Web Service** e attendi la fine della pubblicazione.
@@ -164,7 +166,7 @@ dove arrivano partenza e tempo gara. Il manuale resta com'è. In automatico:
   perché usano lo stesso stato del timer;
 - la **bandiera a scacchi** di Aub fa partire il Finish solo con Finish *Automatico*
   e solo nell'ultima parte della gara (ultimi 10 minuti), così non scatta per errore;
-- avvia, pausa, durate, velocità di test e salti sono fermi; **Azzera** torna al
+- avvia, pausa e durate sono fermi; **Azzera** torna al
   manuale; «Reset completo» (anche la X sul Finish) riallinea agli orari di Aub;
 - se il collegamento cade i telefoni continuano a contare giusto da soli (orari
   assoluti); se il server riparte, il box ripristina da solo l'automatico;
@@ -186,6 +188,33 @@ sono «ora locale del circuito» senza fuso: su Render si può impostare `AUB_TZ
 
 ---
 
+## 4b. Impostazioni salvate e stanze di prova
+
+**Impostazioni salvate.** Capienza e consumo del serbatoio, pulsanti rapidi, messaggi a
+comparsa, giorno/notte, assoluta/categoria, telefono/tablet, durate dei timer, schermata di
+arrivo e gli ultimi indirizzi dei collegamenti (mai le password) restano alla squadra, con
+lo stesso codice team, anche dopo settimane. Il disco di Render gratuito si cancella a ogni
+riavvio, quindi servono un archivio fuori da Render. Il più semplice è Upstash (piano
+gratuito):
+
+1. Su upstash.com crea un database **Redis** (regione Europa) e, nella sua pagina, copia
+   i due valori della sezione *REST API*: `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN`.
+2. Mettili su Render (Environment) con quei nomi e salva: il servizio si riavvia.
+3. Aprendo l'app i telefoni rimandano al server quello che si ricordano e da quel momento
+   tutto è salvato anche fuori da Render.
+
+Se la lettura dell'archivio non riesce il server non scrive nulla finché non riesce (così i
+valori di partenza non cancellano mai quelli veri). In alternativa a Upstash, `DATA_DIR`
+può puntare a una cartella su un disco permanente. Senza nessuno dei due funziona come
+prima: le impostazioni stanno in memoria e nelle copie dei telefoni.
+
+**Stanze di prova.** Un codice team fatto da `TEST` seguito da un numero (`TEST1`,
+`TEST27`) è una stanza di prova: nel tab *Timing* compaiono velocità accelerata (x60/x300),
+scorciatoie e *Reset completo*, il carburante segue la velocità del timer e non si salva
+nulla. Ogni altro codice è una gara vera: quei comandi non si vedono e il server li ignora.
+
+---
+
 ## 5. In gara
 
 1. Tutti inseriscono lo stesso codice team; l'auto sceglie **Auto**, il box **Box**.
@@ -193,8 +222,9 @@ sono «ora locale del circuito» senza fuso: su Render si può impostare `AUB_TZ
    svegliarsi) e premi **Avvio gara**: il server si tiene sveglio da solo. A fine
    gara premi **Fine gara**, altrimenti la gara si chiude da sola dopo 26 ore.
 3. **In pista / Ai box** si accendono per mostrare lo stato attuale.
-4. Se il server si riavvia, i telefoni rimandano capienza, consumo, litri, pulsanti
-   e gara avviata (valgono per lo stesso codice team, fino a 30 ore). Resta da
+4. Se il server si riavvia, le impostazioni della squadra (serbatoio, pulsanti, messaggi,
+   layout, durate dei timer) tornano da sole dall'archivio. I telefoni rimandano i litri
+   in pista e la gara avviata (valgono per lo stesso codice team, fino a 30 ore). Resta da
    ripremere **Collega** nei distacchi.
 
 Sul piano gratuito di Render il servizio si spegne dopo ~15 minuti senza traffico:

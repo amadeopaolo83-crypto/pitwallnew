@@ -98,6 +98,7 @@ function renderTimerBox(t){
     if(rS) rS.value = tot % 60;
   }
 
+  if($('timerProva')) $('timerProva').hidden = !eProva();
   if($('timerSpeedLabel')){
     $('timerSpeedLabel').textContent = 'Velocità test: x' + t.speed + (t.speed !== 1 ? ' — ACCELERATO' : '');
     $('timerSpeedLabel').style.color = t.speed !== 1 ? 'var(--red)' : '';

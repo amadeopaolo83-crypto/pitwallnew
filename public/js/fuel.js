@@ -41,6 +41,7 @@ function renderFuelSystemUI(){
 // consumo carburante, cosi' durante un test si vede scendere in pochi
 // secondi invece che nelle ore vere della gara.
 function fuelTestSpeed(){
+  if(!eProva()) return 1;
   return (typeof lastTimerState !== 'undefined' && lastTimerState && lastTimerState.speed) ? lastTimerState.speed : 1;
 }
 

@@ -1,11 +1,12 @@
 // Lo stato di ogni team, in memoria.
 //
-// Deliberatamente stateless-per-riavvio: si tiene solo l'ultimo stato utile
-// (config pulsanti, consumo, ecc.) cosi' un dispositivo che si riconnette a
-// meta' gara riceve subito lo stato corrente. Dopo un riavvio del processo si
-// riparte da zero, collegamento alla classifica compreso: per questo ogni
-// stanza nasce con il flag `fresh`, e i telefoni che si ricordano i propri
-// valori li rimandano al server (vedi restoreIntoFreshServer nel client).
+// Si tiene solo l'ultimo stato utile (config pulsanti, consumo, ecc.) cosi' un
+// dispositivo che si riconnette a meta' gara riceve subito lo stato corrente.
+// Le IMPOSTAZIONI della squadra (serbatoio, tasti, layout, durate dei timer...)
+// si salvano anche fuori dal server (archivio.js) e tornano da sole dopo un
+// riavvio. Il resto (classifica, giri, collegamenti attivi) riparte da zero: per
+// questo ogni stanza nasce con il flag `fresh`, e i telefoni che si ricordano i
+// propri valori li rimandano al server (vedi restoreIntoFreshServer nel client).
 
 const { AUB_URL, AUB_USER } = require("./config");
 
@@ -25,6 +26,11 @@ function getRoomState(code) {
         { id: 3, label: "Pilota", color: "#7ed321" },
         { id: 4, label: "Ripeti", color: "#bd10e0" },
       ],
+      flashPresets: null, // messaggi a comparsa del box; null = quelli di partenza del telefono
+      // Ultimi indirizzi usati per i collegamenti (mai le password), per ritrovarli nei campi.
+      collegamenti: {}, // { aub: { driverId, url, user }, ponte: { url, number } }
+      archivioErrore: false,       // la lettura delle impostazioni salvate non e' riuscita
+      archivioSalvataggi: false,   // vero quando si possono scrivere (vedi archivio.js)
       timing: null, // { position, gapAhead, gapBehind, updatedAt }
       timingView: "assoluta", // cosa mostra l'auto: "assoluta" o "categoria"
       autoLayout: "telefono", // aspetto della schermata auto: "telefono" (predefinito) o "tablet"
@@ -115,4 +121,11 @@ function posizioneFinale(timing) {
   return timing.position != null ? timing.position : null;
 }
 
-module.exports = { rooms, getRoomState, posizioneFinale };
+// Le stanze di prova si chiamano TEST seguito da un numero (TEST1, TEST27): solo
+// li' si vedono velocita' accelerata e scorciatoie dei timer, e non si salva nulla.
+// Ogni altra stanza e' una gara vera.
+function eProva(code) {
+  return /^TEST\d+$/.test(String(code || ""));
+}
+
+module.exports = { rooms, getRoomState, posizioneFinale, eProva };

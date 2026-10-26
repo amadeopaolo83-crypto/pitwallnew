@@ -9,6 +9,11 @@ const $ = id => document.getElementById(id);
 
 let socket, code, role;
 
+// Le stanze di prova si chiamano TEST seguito da un numero (TEST1, TEST27): solo
+// li' ci sono velocita' accelerata e scorciatoie dei timer. Il server le rispetta
+// allo stesso modo (rooms.js, eProva).
+function eProva(){ return /^TEST\d+$/.test(code || ''); }
+
 // Differenza tra l'orologio del server e quello di questo telefono: i timer
 // sono calcolati sul tempo del server (Date.now() da solo non basta se
 // l'orologio del telefono e' sbagliato o va a un'ora diversa). Si aggiorna

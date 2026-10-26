@@ -153,24 +153,25 @@ function passoRenderBox(){
     el.appendChild(s);
   });
 
-  // tabella di tutte le vetture, dalla piu' veloce
+  // tabella di tutte le vetture, in ordine di classifica
   const tab = $('passoTabellaBox');
   const auto = r ? r.auto : {};
   const righe = Object.keys(auto).map((n) => ({ ...auto[n], num: n }));
-  if(mio) righe.push({ num: r.numero, b: mio.best, g: mio.giri, m10: mio.m && mio.m[10] ? mio.m[10].avg : null, tr: mio.tr, mia: true });
-  righe.sort((a, b) => (a.b ?? 1e9) - (b.b ?? 1e9));
+  if(mio) righe.push({ num: r.numero, p: mio.pos, b: mio.best, g: mio.giri, m10: mio.m && mio.m[10] ? mio.m[10].avg : null, tr: mio.tr, mia: true });
+  // in ordine di classifica; senza posizione: piu' giri prima, poi il best
+  righe.sort((a, b) => (a.p ?? 1e9) - (b.p ?? 1e9) || (b.g ?? 0) - (a.g ?? 0) || (a.b ?? 1e9) - (b.b ?? 1e9));
   if(!righe.length){ tab.textContent = '—'; }
   else {
     const t = document.createElement('table');
-    t.innerHTML = '<thead><tr><th>#</th><th>best</th><th>ult.10</th><th>trend</th><th>giri</th></tr></thead>';
+    t.innerHTML = '<thead><tr><th>pos</th><th>#</th><th>best</th><th>ult.10</th><th>trend</th><th>giri</th></tr></thead>';
     const tb = document.createElement('tbody');
     righe.forEach((x) => {
       const tr = document.createElement('tr');
       if(x.mia) tr.className = 'mia';
-      const cells = [x.num, passoTempo3(x.b), passoTempo(x.m10), null, x.g ?? '—'];
+      const cells = [x.p ?? '—', x.num, passoTempo3(x.b), passoTempo(x.m10), null, x.g ?? '—'];
       cells.forEach((v, i) => {
         const td = document.createElement('td');
-        if(i === 3){ td.textContent = x.tr ? PASSO_FRECCIA[x.tr] : '·'; if(x.tr) td.className = x.tr; }
+        if(i === 4){ td.textContent = x.tr ? PASSO_FRECCIA[x.tr] : '·'; if(x.tr) td.className = x.tr; }
         else td.textContent = v;
         tr.appendChild(td);
       });

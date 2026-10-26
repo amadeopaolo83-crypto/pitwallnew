@@ -3,7 +3,8 @@
 // Ogni "team" e' una stanza identificata dal codice inserito nell'app: chi
 // conosce il codice entra, e ogni messaggio raggiunge solo quella stanza.
 
-const { getRoomState, posizioneFinale } = require("./rooms");
+const { getRoomState, posizioneFinale, eProva } = require("./rooms");
+const archivio = require("./archivio");
 const { notifyBoxDevices } = require("./push");
 const aub = require("./aub");
 const aubtimer = require("./aubtimer");
@@ -32,9 +33,20 @@ function registra(io) {
     let joinedCode = null;
     let joinedRole = null; // "box" | "auto"
 
-    socket.on("join", ({ code, role }, ack) => {
+    // Le impostazioni che vanno salvate fuori dal server quando cambiano (archivio.js).
+    const SALVA = new Set([
+      "fuelSystemUpdate", "autonomyUpdate", "dayModeUpdate", "quickButtonsUpdate", "flashPresetsUpdate",
+      "timingViewUpdate", "autoLayoutUpdate", "timerStartSet", "timerRaceSet", "finishConfigUpdate",
+      "aubConnect", "ponteConnect",
+    ]);
+    socket.onAny((evento) => { if (joinedCode && SALVA.has(evento)) archivio.segna(joinedCode); });
+
+    socket.on("join", async ({ code, role } = {}, ack) => {
       if (!code || !role) return ack && ack({ ok: false, error: "codice o ruolo mancante" });
-      joinedCode = String(code).trim().toUpperCase();
+      const codice = String(code).trim().toUpperCase();
+      // Prima le impostazioni salvate (se la stanza non e' gia' in memoria), poi lo stato.
+      try { await archivio.prepara(codice); } catch (e) { /* si parte con i valori di partenza */ }
+      joinedCode = codice;
       joinedRole = role;
       socket.join(joinedCode);
       socket.data.role = role;
@@ -124,6 +136,18 @@ function registra(io) {
       const state = getRoomState(joinedCode);
       state.dayMode = dayMode;
       io.to(joinedCode).emit("dayModeUpdate", { dayMode });
+    });
+
+    // BOX -> tutti i box: i messaggi a comparsa preparati (testo, colore, durata)
+    socket.on("flashPresetsUpdate", ({ presets } = {}) => {
+      if (!joinedCode || !Array.isArray(presets) || presets.length > 40) return;
+      const pulite = presets.map((p) => ({
+        text: String((p && p.text) || "").slice(0, 200),
+        color: /^#[0-9a-fA-F]{6}$/.test(p && p.color) ? p.color : "#2FB6C4",
+        duration: Math.max(2, Math.min(60, Number(p && p.duration) || 6)),
+      }));
+      getRoomState(joinedCode).flashPresets = pulite;
+      socket.to(joinedCode).emit("flashPresetsUpdate", { presets: pulite });
     });
 
     // BOX -> AUTO: configurazione dei 4 pulsanti rapidi (testo + colore)
@@ -223,7 +247,10 @@ function registra(io) {
         ? { url: (url || "").trim(), user: (user || "").trim(), pass: pass || "" }
         : null;
       aub.start(joinedCode, numero, credenziali);
-      getRoomState(joinedCode).fresh.aub = false;
+      const stanza = getRoomState(joinedCode);
+      stanza.fresh.aub = false;
+      // Si ricordano gli indirizzi (mai la password) per ritrovarli nei campi.
+      stanza.collegamenti.aub = { driverId: numero, url: credenziali ? credenziali.url : "", user: credenziali ? credenziali.user : "" };
       ack && ack({ ok: true });
     });
 
@@ -244,7 +271,11 @@ function registra(io) {
     socket.on("ponteConnect", ({ url, number } = {}, ack) => {
       if (!joinedCode) return ack && ack({ ok: false, error: "non sei in una stanza" });
       const res = ponte.start(joinedCode, url, number);
-      if (res.ok) getRoomState(joinedCode).fresh.ponte = false;
+      if (res.ok) {
+        const stanza = getRoomState(joinedCode);
+        stanza.fresh.ponte = false;
+        stanza.collegamenti.ponte = { url: String(url || "").trim().slice(0, 300), number: String(number || "").trim().slice(0, 20) };
+      }
       ack && ack(res);
     });
 
@@ -406,9 +437,9 @@ function registra(io) {
       io.to(joinedCode).emit("timerUpdate", t);
     });
 
-    // BOX -> tutti: modalita' test, velocita' accelerata dei timer
+    // BOX -> tutti: modalita' test, velocita' accelerata dei timer (solo stanze TEST+numero)
     socket.on("timerTestSpeed", ({ speed } = {}) => {
-      if (!joinedCode || !speed || inAutomatico()) return;
+      if (!joinedCode || !eProva(joinedCode) || !speed || inAutomatico()) return;
       const t = getRoomState(joinedCode).raceTimer;
       // congela i tempi correnti prima di cambiare velocita', per continuita'
       t.startRemaining = currentRemaining(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
@@ -420,8 +451,11 @@ function registra(io) {
     });
 
     // BOX -> tutti: scorciatoie per saltare subito a un punto del flusso da testare
+    // (solo stanze TEST+numero; il "reset" vale ovunque)
     socket.on("timerDebugJump", ({ preset } = {}) => {
       if (!joinedCode) return;
+      // Fuori dalle stanze TEST resta solo il "Reset completo" (usato anche per chiudere il Finish).
+      if (!eProva(joinedCode) && preset !== "reset") return;
       // In automatico resta solo il "Reset completo" (usato anche per chiudere il Finish).
       if (inAutomatico() && preset !== "reset") return;
       const t = getRoomState(joinedCode).raceTimer;

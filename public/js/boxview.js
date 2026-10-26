@@ -73,22 +73,31 @@ function renderFlashEditor(){
     const row = document.createElement('div');
     row.className = 'flash-row';
     row.innerHTML = `
-      <input type="text" value="${p.text}" oninput="flashPresets[${i}].text=this.value">
-      <input type="color" value="${p.color}" oninput="flashPresets[${i}].color=this.value">
-      <input type="number" value="${p.duration}" min="2" max="60" oninput="flashPresets[${i}].duration=+this.value" title="secondi">
+      <input type="text" value="${p.text}" oninput="flashPresets[${i}].text=this.value;flashSalva()">
+      <input type="color" value="${p.color}" oninput="flashPresets[${i}].color=this.value;flashSalva()">
+      <input type="number" value="${p.duration}" min="2" max="60" oninput="flashPresets[${i}].duration=+this.value;flashSalva()" title="secondi">
       <button class="btn small primary" onclick="sendFlashPreset(${i}, this)">Invia</button>`;
     el.appendChild(row);
   });
 }
 
+// Il box salva sul telefono e, poco dopo l'ultima modifica, anche sul server (cosi'
+// i messaggi restano alla squadra e arrivano agli altri box).
+let flashSalvaTimer = null;
+function flashSalva(){
+  save('pc_flash', flashPresets);
+  clearTimeout(flashSalvaTimer);
+  flashSalvaTimer = setTimeout(() => { if(socket) socket.emit('flashPresetsUpdate', { presets: flashPresets }); }, 800);
+}
+
 function addFlashPreset(){
   flashPresets.push({text:'NUOVO MESSAGGIO', color:'#2FB6C4', duration:6});
-  save('pc_flash', flashPresets);
+  flashSalva();
   renderFlashEditor();
 }
 
 function sendFlashPreset(i, btnEl){
-  save('pc_flash', flashPresets);
+  flashSalva();
   const p = flashPresets[i];
   socket.emit('flashMessage', { text: p.text, color: p.color, durationSeconds: p.duration });
   flashConfirm(btnEl);
