@@ -318,6 +318,7 @@
   /* Ultimi 15" del conto alla rovescia di partenza: il numero lampeggia rosso. */
   @keyframes blinkWarn{0%,100%{opacity:1;}50%{opacity:.15;}}
   .blink-warn{animation:blinkWarn .5s steps(1) infinite;color:var(--red)!important;}
+  .warn-red{color:var(--red)!important;}
 
   /* Lampo verde con scritta "VIA!" sull'auto nell'istante in cui la gara parte. */
   .race-start-flash{

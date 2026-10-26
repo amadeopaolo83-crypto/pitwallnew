@@ -192,11 +192,18 @@ setInterval(() => {
     const rem = currentRemainingClient(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
     const txt = fmtHMS(rem);
     const inAllarme = t.startRunning && rem <= 15 && rem > 0;
-    [$('timerStartDisplay'), $('timerStartBannerDisplay')].forEach(el => {
-      if(!el) return;
-      el.textContent = txt;
-      el.classList.toggle('blink-warn', inAllarme);
-    });
+    // Il numero lampeggia solo sull'auto (e' il pilota che deve accorgersi); sul box
+    // negli ultimi secondi resta fisso, rosso, per non dare fastidio.
+    const boxEl = $('timerStartDisplay'), autoEl = $('timerStartBannerDisplay');
+    if(boxEl){
+      boxEl.textContent = txt;
+      boxEl.classList.remove('blink-warn');
+      boxEl.classList.toggle('warn-red', inAllarme);
+    }
+    if(autoEl){
+      autoEl.textContent = txt;
+      autoEl.classList.toggle('blink-warn', inAllarme);
+    }
     // Prima del via il tempo gara mostra la durata impostata, ferma.
     if($('raceClockDisplay')) $('raceClockDisplay').textContent = fmtClock(t.raceRemaining);
     // Qualsiasi dispositivo collegato (box o auto) che vede il proprio
