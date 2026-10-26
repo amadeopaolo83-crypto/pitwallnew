@@ -188,6 +188,16 @@ setInterval(() => {
   const t = lastTimerState;
   if(!t) return;
 
+  // Finito il conto alla rovescia di partenza i numeri non si aggiornano piu': senza
+  // questo restavano fermi sull'ultimo valore (00:01) e il lampeggio continuava.
+  if(t.phase !== 'start'){
+    [$('timerStartDisplay'), $('timerStartBannerDisplay')].forEach(el => {
+      if(!el) return;
+      el.classList.remove('blink-warn', 'warn-red');
+      el.textContent = '00:00';
+    });
+  }
+
   if(t.phase === 'start'){
     const rem = currentRemainingClient(t.startRemaining, t.startUpdatedAt, t.startRunning, t.speed);
     const txt = fmtHMS(rem);
