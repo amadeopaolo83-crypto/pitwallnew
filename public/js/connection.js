@@ -198,8 +198,9 @@ function applyState(state){
 }
 
 function registerListeners(){
-  socket.on('quickMessageReceived', (m) => addLog(m));
-  socket.on('historyCleared', clearHistoryLocal);
+  // I messaggi dall'auto riguardano solo il box: sull'auto non devono suonare ne' vibrare.
+  socket.on('quickMessageReceived', (m) => { if(role === 'box') addLog(m); });
+  socket.on('historyCleared', () => { if(role === 'box') clearHistoryLocal(); });
   socket.on('flashMessage', (m) => { if(role==='auto') showFlash(m); });
   socket.on('fuelUpdate', (f) => { if(fuelTickInterval) return; renderFuel(f.percent); if($('fuelValLabel')) $('fuelValLabel').textContent = 'Livello: '+f.percent+'%'; });
   socket.on('autonomyUpdate', (a) => {

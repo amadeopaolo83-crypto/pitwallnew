@@ -180,6 +180,7 @@ function clearLog(){
 
 // Un messaggio dal vivo: vibrazione SOS e sirena (o un bip, se la sirena e' spenta).
 function avvisaMessaggio(){
+  if(role !== 'box') return; // la sirena e' solo del box
   if(navigator.vibrate) navigator.vibrate(SOS_VIBRATION);
   if(loadSirenSettings().on) playSiren(); else playAlertBeep();
 }
