@@ -57,6 +57,13 @@ function setAutoLayout(layout){
   if(socket && socket.connected) socket.emit('autoLayoutUpdate', { layout: l });
 }
 
+// Soglia dei colori dei distacchi (impostazioni del box): vale per tutta la squadra.
+function setSogliaGap(v){
+  try{ localStorage.setItem('pc_soglia_gap', String(v)); }catch(e){}
+  applySogliaGap(v);
+  if(socket && socket.connected) socket.emit('sogliaGapUpdate', { valore: v });
+}
+
 function applyTimingView(view){
   timingView = view === 'categoria' ? 'categoria' : 'assoluta';
   if($('segViewAss')) $('segViewAss').classList.toggle('active', timingView === 'assoluta');

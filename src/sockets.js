@@ -36,7 +36,7 @@ function registra(io) {
     // Le impostazioni che vanno salvate fuori dal server quando cambiano (archivio.js).
     const SALVA = new Set([
       "fuelSystemUpdate", "autonomyUpdate", "dayModeUpdate", "quickButtonsUpdate", "flashPresetsUpdate",
-      "timingViewUpdate", "autoLayoutUpdate", "timerStartSet", "timerRaceSet", "finishConfigUpdate",
+      "timingViewUpdate", "autoLayoutUpdate", "sogliaGapUpdate", "timerStartSet", "timerRaceSet", "finishConfigUpdate",
       "aubConnect", "ponteConnect",
     ]);
     socket.onAny((evento) => { if (joinedCode && SALVA.has(evento)) archivio.segna(joinedCode); });
@@ -210,6 +210,16 @@ function registra(io) {
       state.autoLayout = layout;
       state.fresh.layout = false;
       io.to(joinedCode).emit("autoLayoutUpdate", { layout });
+    });
+
+    // BOX -> AUTO: di quanto deve cambiare un distacco prima che cambi colore
+    socket.on("sogliaGapUpdate", ({ valore } = {}) => {
+      const v = Number(valore);
+      if (!joinedCode || ![0.1, 0.25, 0.5, 1].includes(v)) return;
+      const state = getRoomState(joinedCode);
+      state.sogliaGap = v;
+      state.fresh.soglia = false;
+      io.to(joinedCode).emit("sogliaGapUpdate", { valore: v });
     });
 
     // Passo gara: riepilogo e storico dei giri della nostra vettura (chi si collega o si

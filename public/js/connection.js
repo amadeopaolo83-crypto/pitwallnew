@@ -127,6 +127,16 @@ function restoreIntoFreshServer(state){
     }
   }
 
+  // Soglia dei colori dei distacchi: la ricorda il box.
+  if(fresh.soglia && role === 'box'){
+    let v = null;
+    try{ v = Number(localStorage.getItem('pc_soglia_gap')); }catch(e){}
+    if([0.1, 0.25, 0.5, 1].includes(v)){
+      state.sogliaGap = v;
+      socket.emit('sogliaGapUpdate', { valore: v });
+    }
+  }
+
   // Lettura dal nostro ponte: se stava andando, riparte.
   if(fresh.ponte){
     const f = load('pc_ponte', null);
@@ -172,6 +182,7 @@ function applyState(state){
   renderFuel(state.fuel.percent);
   applyTimingView(state.timingView || 'assoluta');
   applyAutoLayout(state.autoLayout || 'telefono');
+  applySogliaGap(state.sogliaGap);
   if(state.timing) renderTiming(state.timing);
   if(state.aub) renderAubStatus(state.aub);
   if(state.ponte) renderPonteStatus(state.ponte);
@@ -205,6 +216,7 @@ function registerListeners(){
   socket.on('timingUpdate', renderTiming);
   socket.on('timingViewUpdate', (v) => applyTimingView(v.view));
   socket.on('autoLayoutUpdate', (v) => applyAutoLayout(v.layout));
+  socket.on('sogliaGapUpdate', (v) => applySogliaGap(v.valore));
   socket.on('passoUpdate', passoRicevi);
   socket.on('passoAzzerato', () => {
     passoLocale = { numero: passoLocale.numero, giri: [] };

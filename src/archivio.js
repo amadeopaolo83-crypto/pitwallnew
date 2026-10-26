@@ -93,6 +93,7 @@ function istantanea(S) {
     autonomyMinutes: S.autonomyMinutes,
     timingView: S.timingView,
     autoLayout: S.autoLayout,
+    sogliaGap: S.sogliaGap,
     raceTimer: {
       startSeconds: t.startSeconds, raceSeconds: t.raceSeconds,
       finishMode: t.finishMode, finishBackground: t.finishBackground, finishDriverName: t.finishDriverName,
@@ -124,6 +125,7 @@ function applica(S, d) {
   if (eNumero(d.autonomyMinutes)) S.autonomyMinutes = d.autonomyMinutes;
   if (d.timingView === "assoluta" || d.timingView === "categoria") S.timingView = d.timingView;
   if (d.autoLayout === "telefono" || d.autoLayout === "tablet") { S.autoLayout = d.autoLayout; S.fresh.layout = false; }
+  if ([0.1, 0.25, 0.5, 1].includes(d.sogliaGap)) { S.sogliaGap = d.sogliaGap; S.fresh.soglia = false; }
   const t = d.raceTimer;
   if (t && typeof t === "object") {
     const R = S.raceTimer;

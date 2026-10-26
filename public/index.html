@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=24" />
+<link rel="stylesheet" href="css/style.css?v=25" />
 </head>
 <body>
 
@@ -326,6 +326,17 @@
   </div>
   </div>
   <div class="box-tab" id="boxTab_settings" hidden>
+  <div class="card">
+    <h3>Colore dei distacchi</h3>
+    <div class="row"><span class="mono" style="font-size:12px;">Di quanto deve cambiare il distacco prima che il numero diventi verde o giallo</span></div>
+    <div class="row seg" id="sogliaGapSeg">
+      <button class="btn seg-btn" id="segSoglia01" onclick="setSogliaGap(0.1)">0,1 s</button>
+      <button class="btn seg-btn" id="segSoglia025" onclick="setSogliaGap(0.25)">0,25 s</button>
+      <button class="btn seg-btn" id="segSoglia05" onclick="setSogliaGap(0.5)">0,5 s</button>
+      <button class="btn seg-btn" id="segSoglia1" onclick="setSogliaGap(1)">1 s</button>
+    </div>
+    <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);line-height:1.4;">Più è piccolo, più il colore reagisce. Più è grande, meno cambia colore per variazioni piccole. Vale per tutta la squadra. Verde: la situazione migliora (davanti si riduce, dietro aumenta). Giallo: peggiora. Bianco: nessun cambio.</span></div>
+  </div>
   <!-- 3. Capienza, livello di partenza, rifornimento -->
   <div class="card">
     <h3>Serbatoio</h3>
@@ -397,17 +408,17 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=24"></script>
-<script src="js/push.js?v=24"></script>
-<script src="js/connection.js?v=24"></script>
-<script src="js/autoview.js?v=24"></script>
-<script src="js/fuel.js?v=24"></script>
-<script src="js/boxview.js?v=24"></script>
-<script src="js/timing.js?v=24"></script>
-<script src="js/passo.js?v=24"></script>
-<script src="js/race.js?v=24"></script>
-<script src="js/timer.js?v=24"></script>
-<script src="js/install.js?v=24"></script>
-<script src="js/app.js?v=24"></script>
+<script src="js/core.js?v=25"></script>
+<script src="js/push.js?v=25"></script>
+<script src="js/connection.js?v=25"></script>
+<script src="js/autoview.js?v=25"></script>
+<script src="js/fuel.js?v=25"></script>
+<script src="js/boxview.js?v=25"></script>
+<script src="js/timing.js?v=25"></script>
+<script src="js/passo.js?v=25"></script>
+<script src="js/race.js?v=25"></script>
+<script src="js/timer.js?v=25"></script>
+<script src="js/install.js?v=25"></script>
+<script src="js/app.js?v=25"></script>
 </body>
 </html>

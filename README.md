@@ -293,7 +293,8 @@ posizione e vetture davanti e dietro abbiano senso, e se qualcosa non torna pass
 **Colori sull'auto** (telefono e tablet): i distacchi sono bianchi finché non cambiano.
 Il distacco da chi sta *davanti* diventa verde se si riduce e giallo se aumenta; quello da
 chi sta *dietro* è verde se aumenta e giallo se si riduce. Cambia colore solo con una
-differenza di almeno 0,1 s; con un avversario nuovo riparte da bianco. La posizione è bianca.
+differenza di almeno 0,1 s (predefinito); dal box, scheda *Impostazioni → Colore dei distacchi*,
+si sceglie 0,1, 0,25, 0,5 o 1 s, per tutta la squadra. Con un avversario nuovo riparte da bianco. La posizione è bianca.
 
 **Schermata tablet:** dal box, scheda *Timing → Schermata auto*, si sceglie *Telefono*
 (predefinito) o *Tablet*. Vale per tutta la squadra e si ricorda dopo un riavvio del server

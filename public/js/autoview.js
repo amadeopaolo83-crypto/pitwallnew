@@ -74,7 +74,14 @@ function renderTiming(t){
 // cambiare colore, con una soglia per non seguire i centesimi; un avversario nuovo
 // (o una vista diversa) riparta da bianco.
 const gapStato = { Ahead: { key: null, ref: null, dir: null }, Behind: { key: null, ref: null, dir: null } };
-const SOGLIA_GAP_COLORE = 0.1; // secondi
+let sogliaGap = 0.1; // secondi: lo sceglie il box (0.1, 0.25, 0.5 o 1), vale per tutta la squadra
+function applySogliaGap(v){
+  const n = Number(v);
+  sogliaGap = [0.1, 0.25, 0.5, 1].includes(n) ? n : 0.1;
+  [['segSoglia01', 0.1], ['segSoglia025', 0.25], ['segSoglia05', 0.5], ['segSoglia1', 1]].forEach(([id, val]) => {
+    if($(id)) $(id).classList.toggle('active', sogliaGap === val);
+  });
+}
 
 function coloraGap(lato, testo, chiave){
   const el = $(lato === 'Ahead' ? 'timingGapAhead' : 'timingGapBehind');
@@ -83,7 +90,7 @@ function coloraGap(lato, testo, chiave){
   const st = gapStato[lato];
   if(s == null || st.key !== chiave){
     st.key = s == null ? null : chiave; st.ref = s; st.dir = null;
-  } else if(Math.abs(s - st.ref) > SOGLIA_GAP_COLORE){
+  } else if(Math.abs(s - st.ref) > sogliaGap){
     st.dir = s < st.ref ? 'shrink' : 'grow';
     st.ref = s;
   }
