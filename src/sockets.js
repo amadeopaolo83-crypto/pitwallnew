@@ -5,7 +5,7 @@
 
 const { getRoomState, posizioneFinale, eProva } = require("./rooms");
 const archivio = require("./archivio");
-const { notifyBoxDevices } = require("./push");
+const { notifyBoxDevices, togliDispositivo } = require("./push");
 const aub = require("./aub");
 const aubtimer = require("./aubtimer");
 const ponte = require("./ponte");
@@ -60,10 +60,15 @@ function registra(io) {
 
     // BOX -> server: registra la sottoscrizione push di questo dispositivo
     socket.on("registerPush", ({ subscription }) => {
-      if (!joinedCode || !subscription) return;
+      if (!joinedCode || !subscription || joinedRole !== "box") return;
       const state = getRoomState(joinedCode);
       const exists = state.pushSubscriptions.some((s) => s.endpoint === subscription.endpoint);
       if (!exists) state.pushSubscriptions.push(subscription);
+    });
+
+    // Questo telefono non e' piu' un box: niente piu' notifiche dei messaggi.
+    socket.on("unregisterPush", ({ endpoint } = {}) => {
+      if (typeof endpoint === "string") togliDispositivo(endpoint);
     });
 
     // AUTO -> BOX: pressione di uno dei 4 pulsanti rapidi

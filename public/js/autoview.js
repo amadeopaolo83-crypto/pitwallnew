@@ -5,6 +5,7 @@ let wakeLockRef = null;
 
 async function enterAutoView(){
   $('autoView').hidden = false;
+  disattivaPush(); // questo telefono e' l'auto: niente notifiche dei messaggi
   renderQuickGrid();
   try{ await document.documentElement.requestFullscreen(); }catch(e){}
   try{ await screen.orientation.lock('landscape'); }catch(e){ checkOrientation(); }

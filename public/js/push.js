@@ -65,3 +65,17 @@ async function setupPushNotifications(){
     setPushStatus('Notifiche non disponibili su questo browser');
   }
 }
+
+// Il telefono e' passato da "Box" ad "Auto": si toglie l'iscrizione alle notifiche, qui e
+// sul server, cosi' i messaggi dell'auto non arrivano al telefono dell'auto.
+async function disattivaPush(){
+  try{
+    if(!('serviceWorker' in navigator)) return;
+    const reg = await navigator.serviceWorker.getRegistration();
+    if(!reg) return;
+    const sub = await reg.pushManager.getSubscription();
+    if(!sub) return;
+    if(socket && socket.connected) socket.emit('unregisterPush', { endpoint: sub.endpoint });
+    await sub.unsubscribe();
+  }catch(e){}
+}
