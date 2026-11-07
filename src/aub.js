@@ -228,7 +228,14 @@ function chiediClassifica(code, numero) {
 function passoDaClassifica(code, payload, numero) {
   try {
     const piloti = pilotiDaAub(payload);
-    if (piloti.length) passo.registra(code, piloti, nostroNumero(payload, numero));
+    if (!piloti.length) return;
+    // Con un numero scelto dal box si segue SOLO quello: se per un momento non c'e' nella
+    // lista non si ripiega sulla vettura "myself" di Aub (e' un'altra: il passo
+    // salterebbe e lo storico ripartirebbe da zero), si aspetta la lettura dopo.
+    const voluto = String(numero == null ? "" : numero).trim();
+    const nostro = nostroNumero(payload, numero);
+    if (voluto && nostro !== voluto) return;
+    passo.registra(code, piloti, nostro);
   } catch (e) { /* il passo non deve fermare i distacchi */ }
 }
 
@@ -393,10 +400,18 @@ function aubStart(code, driverId, credenziali) {
   aubPassoLoop(code, link, driverId);
 }
 
+// Vero se per questa stanza c'e' una lettura AUB in corso.
+function aubAttivo(code) {
+  const link = aubLinks.get(code);
+  return Boolean(link && !link.stopped);
+}
+
 module.exports = {
   init,
   start: aubStart,
   stop: aubStop,
+  attivo: aubAttivo,
+  _test: { passoDaClassifica },
   setStatus: setAubStatus,
   diagnosi,
   diagnosiCompleta,

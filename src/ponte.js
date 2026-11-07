@@ -347,10 +347,17 @@ function start(code, eventoTesto, numeroTesto) {
   return { ok: true };
 }
 
+// Vero se per questa stanza c'e' una lettura dal ponte in corso.
+function attivo(code) {
+  const link = links.get(code);
+  return Boolean(link && !link.stopped);
+}
+
 module.exports = {
   init,
   start,
   stop,
+  attivo,
   setStatus,
   computeTiming,
   _test: { computeTiming, distanzaTra, formatSeconds, formatGap, validaEvento },

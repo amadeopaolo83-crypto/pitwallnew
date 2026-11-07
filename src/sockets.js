@@ -254,10 +254,22 @@ function registra(io) {
     // BOX -> server: aggancia la classifica AUB al numero di gara della vettura.
     // url/user/pass sono facoltativi: se non arrivano si usano le variabili
     // d'ambiente del server, che e' il posto giusto dove tenerli.
-    socket.on("aubConnect", ({ driverId, url, user, pass }, ack) => {
+    // Una sola sorgente di distacchi e passo per stanza: AUB diretto oppure il ponte.
+    // Due letture insieme con numeri diversi si sovrascriverebbero a vicenda (i distacchi
+    // e il passo salterebbero da una vettura all'altra e lo storico ripartirebbe da zero).
+    // Chi preme "Collega" sostituisce la lettura in corso; chi la sta solo ripristinando
+    // dopo un riavvio (`ripristino`) non ne scavalca una gia' attiva.
+    const fermaPonte = () => {
+      ponte.stop(joinedCode);
+      ponte.setStatus(joinedCode, { connected: false, status: "spento", error: null, session: null, flag: null });
+    };
+    socket.on("aubConnect", ({ driverId, url, user, pass, ripristino }, ack) => {
       if (!joinedCode) return ack && ack({ ok: false, error: "non sei in una stanza" });
+      if (joinedRole !== "box") return ack && ack({ ok: false, error: "solo il box avvia la lettura" });
       const numero = String(driverId || "").trim();
       if (!numero) return ack && ack({ ok: false, error: "numero di gara mancante" });
+      if (ripristino && (aub.attivo(joinedCode) || ponte.attivo(joinedCode))) return ack && ack({ ok: true, ignorato: true });
+      if (ponte.attivo(joinedCode)) fermaPonte();
       const credenziali = (url || user || pass)
         ? { url: (url || "").trim(), user: (user || "").trim(), pass: pass || "" }
         : null;
@@ -283,8 +295,14 @@ function registra(io) {
 
     // BOX -> server: legge i distacchi dal nostro ponte, che traduce i vari siti di
     // live timing. Servono l'indirizzo della pagina dell'evento e il numero della vettura.
-    socket.on("ponteConnect", ({ url, number } = {}, ack) => {
+    socket.on("ponteConnect", ({ url, number, ripristino } = {}, ack) => {
       if (!joinedCode) return ack && ack({ ok: false, error: "non sei in una stanza" });
+      if (joinedRole !== "box") return ack && ack({ ok: false, error: "solo il box avvia la lettura" });
+      if (ripristino && (aub.attivo(joinedCode) || ponte.attivo(joinedCode))) return ack && ack({ ok: true, ignorato: true });
+      if (aub.attivo(joinedCode)) {
+        aub.stop(joinedCode);
+        aub.setStatus(joinedCode, { connected: false, driverId: null, status: "spento", error: null });
+      }
       const res = ponte.start(joinedCode, url, number);
       if (res.ok) {
         const stanza = getRoomState(joinedCode);
