@@ -113,7 +113,7 @@ function restoreIntoFreshServer(state){
     if(f && f.code === code && f.active && f.driverId && (Date.now() - f.at) < FUEL_LOCAL_MAX_MS){
       let pass = '';
       try{ pass = localStorage.getItem('pc_aub_pass') || ''; }catch(e){}
-      socket.emit('aubConnect', { driverId: f.driverId, url: f.url || '', user: f.user || '', pass });
+      socket.emit('aubConnect', { driverId: f.driverId, url: f.url || '', user: f.user || '', pass, ripristino: true });
     }
   }
 
@@ -138,10 +138,10 @@ function restoreIntoFreshServer(state){
   }
 
   // Lettura dal nostro ponte: se stava andando, riparte.
-  if(fresh.ponte){
+  if(fresh.ponte && role === 'box'){ // il telefono dell'auto non avvia letture
     const f = load('pc_ponte', null);
     if(f && f.code === code && f.active && f.url && f.number && (Date.now() - f.at) < FUEL_LOCAL_MAX_MS){
-      socket.emit('ponteConnect', { url: f.url, number: f.number });
+      socket.emit('ponteConnect', { url: f.url, number: f.number, ripristino: true });
     }
   }
 
