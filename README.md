@@ -348,3 +348,7 @@ durante una gara: il riavvio azzera lo stato (poi i telefoni lo ripristinano).
 | "Nostro": nessun traduttore per questo sito | Il fornitore non è ancora supportato dal ponte: serve aggiornare il ponte. |
 | "Nostro": evento non ancora pubblicato | L'evento non è ancora in elenco: resta in attesa e si collega da solo. |
 | Pagina non trovata | Controlla i nomi delle cartelle: `src`, `public`, `public/js`, `public/css`, `public/icons`. |
+
+
+### Una sola sorgente per stanza
+AUB diretto e "Nostro" (ponte) non possono girare insieme nella stessa stanza: chi preme Collega sostituisce la lettura in corso; il ripristino automatico dopo un riavvio non ne scavalca una gia' attiva (solo dal box). Il Passo segue sempre il numero scelto e non ripiega mai sulla vettura "myself" di Aub.
