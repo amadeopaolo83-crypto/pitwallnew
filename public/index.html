@@ -391,25 +391,25 @@
   </div>
   <div class="card">
     <h3>Allarmi di gara</h3>
-    <div class="row"><span>Attivi (spenti all'inizio)</span>
+    <div class="row al-riga"><span>Attivi (spenti all'inizio)</span>
       <label class="toggle"><input type="checkbox" id="alOn" onchange="crImpostaAllarme('on', this.checked)"><span class="knob"></span></label>
     </div>
-    <div class="row"><span>Dietro vicino, entro (s)</span>
+    <div class="row al-riga"><span>Dietro vicino, entro (s)</span>
       <label class="toggle"><input type="checkbox" id="alDietro" onchange="crImpostaAllarme('dietro', this.checked)"><span class="knob"></span></label>
       <input type="number" id="alDietroS" step="0.5" min="0.5" style="width:70px;text-align:center;" onchange="crVal(this,'dietroS')">
     </div>
-    <div class="row"><span>Passo calato di oltre (s)</span>
+    <div class="row al-riga"><span>Passo calato di oltre (s)</span>
       <label class="toggle"><input type="checkbox" id="alPasso" onchange="crImpostaAllarme('passo', this.checked)"><span class="knob"></span></label>
       <input type="number" id="alPassoS" step="0.1" min="0.1" style="width:70px;text-align:center;" onchange="crVal(this,'passoS')">
     </div>
-    <div class="row"><span>Giro piu' lento di oltre (s)</span>
+    <div class="row al-riga"><span>Giro piu' lento di oltre (s)</span>
       <label class="toggle"><input type="checkbox" id="alLento" onchange="crImpostaAllarme('lento', this.checked)"><span class="knob"></span></label>
       <input type="number" id="alLentoS" step="0.1" min="0.1" style="width:70px;text-align:center;" onchange="crVal(this,'lentoS')">
     </div>
-    <div class="row"><span>Rivale di categoria dietro ti raggiunge entro la fine</span>
+    <div class="row al-riga"><span>Rivale di categoria dietro ti raggiunge entro la fine</span>
       <label class="toggle"><input type="checkbox" id="alRimonta" onchange="crImpostaAllarme('rimonta', this.checked)"><span class="knob"></span></label>
     </div>
-    <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);line-height:1.4;">Suonano un bip e vibrano solo su questo box, e solo dopo circa 10 giri validi. Ogni avviso scatta una volta e si riarma quando la situazione torna normale. Valgono per questo telefono.</span></div>
+    <div class="row al-nota"><span class="mono" style="font-size:11px;color:var(--muted);line-height:1.4;">Suonano un bip e vibrano solo su questo box, e solo dopo circa 10 giri validi. Ogni avviso scatta una volta e si riarma quando la situazione torna normale. Valgono per questo telefono.</span></div>
   </div>
   <div class="card">
     <h3>Allarme messaggi</h3>

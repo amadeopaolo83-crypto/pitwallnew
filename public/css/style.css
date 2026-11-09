@@ -364,3 +364,9 @@
 .cat-noi .cat-pos{color:inherit;}
 .cat-gap{font-variant-numeric:tabular-nums;font-weight:700;}
 .cat-vuoto{color:var(--muted);font-size:13px;}
+
+/* Allarmi di gara: etichetta, interruttore e valore su colonne allineate */
+.al-riga{display:grid;grid-template-columns:1fr 52px 74px;align-items:center;column-gap:12px;}
+.al-riga > .toggle{justify-self:center;}
+.al-riga > input[type=number]{width:74px !important;box-sizing:border-box;}
+.al-nota{display:block;}
