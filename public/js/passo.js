@@ -93,6 +93,48 @@ function passoConfronto(lato){
   return { testo: 'ti allontani ' + abs, tono: 'buono' };
 }
 
+// Secondi alla fine della gara (null se il timer di gara non e' in corso).
+function passoRimasto(){
+  const t = (typeof lastTimerState !== 'undefined') ? lastTimerState : null;
+  if(!t || t.phase !== 'race' || !t.raceRunning) return null;
+  return currentRemainingClient(t.raceRemaining, t.raceUpdatedAt, t.raceRunning, t.speed);
+}
+
+// "1:42.4" da secondi (un decimo) per i passi obiettivo.
+function passoTempo1(sec){
+  if(sec == null || !isFinite(sec)) return '\u2014';
+  const m = Math.floor(sec / 60), r = sec - m * 60;
+  return m + ':' + (r < 10 ? '0' : '') + r.toFixed(1);
+}
+
+// Quanto piu' veloce girare, da qui alla fine, per prendere quello davanti o per non farsi
+// prendere da quello dietro. Si assume che il rivale tenga il suo passo medio attuale
+// (ultimi 10 giri). Ritorna una riga di testo o ''.
+function passoObiettivo(lato){
+  const r = passoRivali();
+  if(!r || !passoRis || !passoRis.mio) return '';
+  const mio = passoRis.mio.m && passoRis.mio.m[10] ? passoRis.mio.m[10].avg : null;
+  const riv = r[lato].numero ? passoRis.auto[String(r[lato].numero)] : null;
+  const gap = r[lato].gap;
+  const rem = passoRimasto();
+  if(mio == null || !riv || riv.m10 == null || gap == null || gap <= 0 || rem == null || rem <= 0) return '';
+  const L = Math.floor(rem / mio); // giri che ci restano da fare
+  if(L < 1) return '';
+  const best = passoRis.mio.best;
+  const pace = (p) => passoTempo1(p) + (best != null && p < best ? ' (piu\u0027 veloce del tuo best!)' : '');
+  const premessa = 'Alla fine ~' + L + ' giri. ';
+  if(lato === 'ahead'){
+    const serve = riv.m10 - gap / L;          // passo medio che serve per chiudere il distacco in L giri
+    const piu = mio - serve;
+    if(piu <= 0) return premessa + 'Al passo attuale lo prendi entro la fine.';
+    return premessa + 'Per prenderlo entro la fine: ' + pace(serve) + ' di media, ' + piu.toFixed(1) + ' s/giro piu\u0027 veloce di ora.';
+  }
+  const limite = riv.m10 + gap / L;           // passo medio oltre il quale ti prende entro la fine
+  const piu = mio - limite;
+  if(piu <= 0) return premessa + 'Al passo attuale non ti prende entro la fine.';
+  return premessa + 'Per non farti prendere: ' + pace(limite) + ' di media, ' + piu.toFixed(1) + ' s/giro piu\u0027 veloce di ora.';
+}
+
 function passoRenderConfronti(){
   [['ahead', 'projAhead'], ['behind', 'projBehind']].forEach(([lato, id]) => {
     const el = $(id);
@@ -138,8 +180,9 @@ function passoRenderBox(){
     return et + ' ' + n + ': ' + (c.testo || 'dati non ancora sufficienti');
   };
   $('passoCmpBox').textContent = '';
-  [riga('Davanti', 'ahead', c1), riga('Dietro', 'behind', c2)].forEach((t) => {
+  [[riga('Davanti', 'ahead', c1), passoObiettivo('ahead')], [riga('Dietro', 'behind', c2), passoObiettivo('behind')]].forEach(([t, ob]) => {
     const d = document.createElement('div'); d.textContent = t; $('passoCmpBox').appendChild(d);
+    if(ob){ const o = document.createElement('div'); o.textContent = ob; o.style.cssText = 'font-size:12px;color:var(--muted);margin-bottom:6px;'; $('passoCmpBox').appendChild(o); }
   });
 
   const el = $('passoGiriBox');
@@ -266,3 +309,6 @@ function passoAzzera(){
   if(socket && socket.connected) socket.emit('passoAzzera');
   passoRender();
 }
+
+// Il tempo alla fine scorre anche tra un giro e l'altro: si aggiornano le previsioni del box.
+setInterval(() => { try{ if(role === 'box' && passoRis) passoRenderBox(); }catch(e){} }, 15000);
