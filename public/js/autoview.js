@@ -67,6 +67,7 @@ function renderTiming(t){
             : t.catName + ' ' + (t.catPosition ?? '\u2014') + '\u00b0';
   }
   if(typeof passoRenderConfronti === 'function') passoRenderConfronti();
+  try{ if(typeof crRenderCategoria === 'function' && role === 'box') crRenderCategoria(); }catch(e){}
 }
 
 // Colore dei distacchi: bianco finche' non cambiano, poi verde se la situazione

@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=34" />
+<link rel="stylesheet" href="css/style.css?v=35" />
 </head>
 <body>
 
@@ -123,6 +123,10 @@
     <button class="tab" id="boxTabBtn_settings" onclick="setBoxTab('settings')">Impostazioni</button>
   </div>
   <div class="box-tab" id="boxTab_gara">
+  <div class="card" id="catCard">
+    <h3>La nostra categoria <span id="catNome" class="cat-nome"></span></h3>
+    <div id="catPosto" class="cat-grid"><div class="cat-vuoto">In attesa del timing…</div></div>
+  </div>
   <div class="card">
     <h3>Cruscotto</h3>
     <div id="crCruscotto" class="mono" style="font-size:13px;line-height:1.6;">—</div>
@@ -442,18 +446,18 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=34"></script>
-<script src="js/push.js?v=34"></script>
-<script src="js/connection.js?v=34"></script>
-<script src="js/autoview.js?v=34"></script>
-<script src="js/fuel.js?v=34"></script>
-<script src="js/boxview.js?v=34"></script>
-<script src="js/timing.js?v=34"></script>
-<script src="js/passo.js?v=34"></script>
-<script src="js/cruscotto.js?v=34"></script>
-<script src="js/race.js?v=34"></script>
-<script src="js/timer.js?v=34"></script>
-<script src="js/install.js?v=34"></script>
-<script src="js/app.js?v=34"></script>
+<script src="js/core.js?v=35"></script>
+<script src="js/push.js?v=35"></script>
+<script src="js/connection.js?v=35"></script>
+<script src="js/autoview.js?v=35"></script>
+<script src="js/fuel.js?v=35"></script>
+<script src="js/boxview.js?v=35"></script>
+<script src="js/timing.js?v=35"></script>
+<script src="js/passo.js?v=35"></script>
+<script src="js/cruscotto.js?v=35"></script>
+<script src="js/race.js?v=35"></script>
+<script src="js/timer.js?v=35"></script>
+<script src="js/install.js?v=35"></script>
+<script src="js/app.js?v=35"></script>
 </body>
 </html>

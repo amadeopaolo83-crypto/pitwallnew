@@ -325,6 +325,37 @@ function crRenderCruscotto(){
   }
 }
 
+// Classifica di categoria in cima alla pagina Gara: noi, chi sta davanti, chi sta dietro.
+function crRenderCategoria(){
+  const box = $('catPosto');
+  if(!box) return;
+  const t = (typeof lastTiming !== 'undefined') ? lastTiming : null;
+  const nome = $('catNome');
+  box.textContent = '';
+  if(!t || !t.catName || t.catPosition == null){
+    if(nome) nome.textContent = '';
+    const v = document.createElement('div');
+    v.className = 'cat-vuoto';
+    v.textContent = !t ? 'In attesa del timing\u2026' : 'Categoria non disponibile da questa fonte';
+    box.appendChild(v);
+    return;
+  }
+  if(nome) nome.textContent = t.catName;
+  const riga = (cls, pos, chi, gap) => {
+    const r = document.createElement('div');
+    r.className = 'cat-riga ' + cls;
+    const a = document.createElement('span'); a.className = 'cat-pos'; a.textContent = pos;
+    const b = document.createElement('span'); b.className = 'cat-chi'; b.textContent = chi;
+    const c = document.createElement('span'); c.className = 'cat-gap'; c.textContent = gap;
+    r.appendChild(a); r.appendChild(b); r.appendChild(c);
+    box.appendChild(r);
+  };
+  const p = Number(t.catPosition);
+  riga('cat-davanti', t.catNumberAhead ? (p - 1) + '\u00b0' : '', t.catNumberAhead ? descriviRivale(t.catNumberAhead, t.catNameAhead) : 'Sei in testa alla categoria', t.catNumberAhead ? (t.catGapAhead || '\u2014') : '');
+  riga('cat-noi', p + '\u00b0', 'NOI', '');
+  riga('cat-dietro', t.catNumberBehind ? (p + 1) + '\u00b0' : '', t.catNumberBehind ? descriviRivale(t.catNumberBehind, t.catNameBehind) : 'Nessuno dietro', t.catNumberBehind ? (t.catGapBehind || '\u2014') : '');
+}
+
 function crRenderGapCard(){
   const box = $('passoGapGiri');
   if(!box) return;
@@ -342,6 +373,7 @@ function crGiro(){
     crAllarmi();
     crRenderCruscotto();
     crRenderGapCard();
+    crRenderCategoria();
     crRenderConsumo();
   }catch(e){ /* il cruscotto non deve mai fermare il resto */ }
 }

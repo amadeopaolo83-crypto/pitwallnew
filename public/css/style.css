@@ -354,3 +354,13 @@
 .cr-muto{color:var(--muted);}
 .cr-piccolo{font-size:11px;}
 .cr-titolo{color:var(--muted);margin-top:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
+
+/* Classifica di categoria in cima alla pagina Gara (solo box) */
+.cat-nome{color:var(--accent,#f5c518);font-size:12px;margin-left:8px;letter-spacing:.05em;}
+.cat-grid{display:flex;flex-direction:column;gap:6px;}
+.cat-riga{display:grid;grid-template-columns:3.2em 1fr auto;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.04);font-size:16px;}
+.cat-riga.cat-noi{background:rgba(245,197,24,.16);font-weight:700;font-size:22px;}
+.cat-pos{font-weight:700;color:var(--muted);}
+.cat-noi .cat-pos{color:inherit;}
+.cat-gap{font-variant-numeric:tabular-nums;font-weight:700;}
+.cat-vuoto{color:var(--muted);font-size:13px;}
