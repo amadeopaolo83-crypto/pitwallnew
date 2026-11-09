@@ -345,3 +345,12 @@
 
 /* Comandi fermi (per esempio i timer manuali quando il timer e' in automatico) */
 .btn:disabled, input:disabled { opacity: .4; cursor: not-allowed; }
+
+/* cruscotto del box */
+.cr-riga{padding:2px 0;}
+.cr-buono{color:var(--green);}
+.cr-cattivo{color:var(--red);}
+.cr-attenzione{color:var(--yellow);}
+.cr-muto{color:var(--muted);}
+.cr-piccolo{font-size:11px;}
+.cr-titolo{color:var(--muted);margin-top:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;}

@@ -116,6 +116,7 @@ function setTankCapacity(){
 function setStartingLiters(){
   const liters = +$('startingLitersInput').value;
   if(liters === 0 || isNaN(liters) || $('startingLitersInput').value === '') return;
+  if(typeof consumoLivelloImpostato === 'function') consumoLivelloImpostato(liters);
   fuelSystem.currentLiters = Math.min(liters, fuelSystem.tankCapacityLiters);
   fuelSystem.onTrack = false;
   fuelSystem.sessionStartAt = null;
@@ -128,6 +129,8 @@ function doRefuel(){
   const added = +$('refuelLitersInput').value;
   if(!added) return;
   const before = computeLiveLiters();
+  // Il consumo si impara dai rifornimenti "fino al pieno" (prima di cambiare lo stato).
+  if(typeof consumoImpara === 'function') consumoImpara(added, $('refuelPieno') ? $('refuelPieno').checked : false);
   fuelSystem.currentLiters = Math.min(fuelSystem.tankCapacityLiters, before + added);
   fuelSystem.onTrack = false;
   fuelSystem.sessionStartAt = null;
@@ -153,11 +156,13 @@ function setOnTrack(goingOnTrack){
   // non deve far ripartire il conteggio.
   if(!!goingOnTrack === !!fuelSystem.onTrack) return;
   if(goingOnTrack){
+    if(typeof consumoInizioSessione === 'function') consumoInizioSessione();
     fuelSystem.currentLiters = computeLiveLiters();
     fuelSystem.onTrack = true;
     fuelSystem.sessionStartAt = nowSync();
     fuelSystem.sessionStartLiters = fuelSystem.currentLiters;
   } else {
+    if(typeof consumoFineSessione === 'function') consumoFineSessione();
     fuelSystem.currentLiters = computeLiveLiters();
     fuelSystem.onTrack = false;
     fuelSystem.sessionStartAt = null;

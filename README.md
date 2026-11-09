@@ -352,3 +352,10 @@ durante una gara: il riavvio azzera lo stato (poi i telefoni lo ripristinano).
 
 ### Una sola sorgente per stanza
 AUB diretto e "Nostro" (ponte) non possono girare insieme nella stessa stanza: chi preme Collega sostituisce la lettura in corso; il ripristino automatico dopo un riavvio non ne scavalca una gia' attiva (solo dal box). Il Passo segue sempre il numero scelto e non ripiega mai sulla vettura "myself" di Aub.
+
+### Cruscotto del box (solo box, la schermata auto non cambia)
+- **Gara → Cruscotto**: quanto e' fresca la classifica, previsioni su davanti/dietro, giri alla fine, benzina in giri e soste necessarie (stime), ultimi avvisi.
+- **Passo → Distacco giro per giro**: i distacchi annotati a ogni nostro giro, con la variazione.
+- **Impostazioni → Allarmi di gara**: spenti di default; dietro vicino, passo calato, giro lento, rivale di categoria che ti raggiunge entro la fine. Valgono per quel telefono.
+- **Rifornimento → "Rifornito fino al pieno"**: il consumo si impara da solo (litri aggiunti / ore in pista) partendo da un serbatoio pieno.
+- Si ragiona solo sul timing: niente bandiere. Tutto e' lato telefono (`public/js/cruscotto.js`).

@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<link rel="stylesheet" href="css/style.css?v=30" />
+<link rel="stylesheet" href="css/style.css?v=31" />
 </head>
 <body>
 
@@ -124,6 +124,10 @@
   </div>
   <div class="box-tab" id="boxTab_gara">
   <div class="card">
+    <h3>Cruscotto</h3>
+    <div id="crCruscotto" class="mono" style="font-size:13px;line-height:1.6;">—</div>
+  </div>
+  <div class="card">
     <h3>Messaggi ricevuti dall'auto</h3>
     <div id="log"></div>
     <button class="btn small" style="margin-top:10px;" onclick="clearLog()">Cancella cronologia</button>
@@ -153,6 +157,10 @@
   <div class="card">
     <h3>Rifornimento</h3>
     <div class="row"><input type="number" id="refuelLitersInput" placeholder="Litri appena riforniti"></div>
+    <div class="row"><span>Rifornito fino al pieno</span>
+      <label class="toggle"><input type="checkbox" id="refuelPieno" checked><span class="knob"></span></label>
+    </div>
+    <div class="row"><span class="mono" id="consumoImparatoLabel" style="font-size:11px;color:var(--muted);line-height:1.4;"></span></div>
     <div class="row"><button class="btn small" style="width:100%" onclick="doRefuel()">Rifornisci</button></div>
   </div>
   </div>
@@ -171,6 +179,10 @@
     <div class="card">
       <h3>Confronto con davanti e dietro (ultimi 10 giri validi)</h3>
       <div id="passoCmpBox" class="mono" style="font-size:13px;line-height:1.7;">—</div>
+    </div>
+    <div class="card">
+      <h3>Distacco giro per giro</h3>
+      <div id="passoGapGiri" class="mono" style="font-size:13px;line-height:1.7;">—</div>
     </div>
     <div class="card">
       <h3>Ultimi giri</h3>
@@ -374,6 +386,28 @@
     </div>
   </div>
   <div class="card">
+    <h3>Allarmi di gara</h3>
+    <div class="row"><span>Attivi (spenti all'inizio)</span>
+      <label class="toggle"><input type="checkbox" id="alOn" onchange="crImpostaAllarme('on', this.checked)"><span class="knob"></span></label>
+    </div>
+    <div class="row"><span>Dietro vicino, entro (s)</span>
+      <label class="toggle"><input type="checkbox" id="alDietro" onchange="crImpostaAllarme('dietro', this.checked)"><span class="knob"></span></label>
+      <input type="number" id="alDietroS" step="0.5" min="0.5" style="width:70px;text-align:center;" onchange="crVal(this,'dietroS')">
+    </div>
+    <div class="row"><span>Passo calato di oltre (s)</span>
+      <label class="toggle"><input type="checkbox" id="alPasso" onchange="crImpostaAllarme('passo', this.checked)"><span class="knob"></span></label>
+      <input type="number" id="alPassoS" step="0.1" min="0.1" style="width:70px;text-align:center;" onchange="crVal(this,'passoS')">
+    </div>
+    <div class="row"><span>Giro piu' lento di oltre (s)</span>
+      <label class="toggle"><input type="checkbox" id="alLento" onchange="crImpostaAllarme('lento', this.checked)"><span class="knob"></span></label>
+      <input type="number" id="alLentoS" step="0.1" min="0.1" style="width:70px;text-align:center;" onchange="crVal(this,'lentoS')">
+    </div>
+    <div class="row"><span>Rivale di categoria dietro ti raggiunge entro la fine</span>
+      <label class="toggle"><input type="checkbox" id="alRimonta" onchange="crImpostaAllarme('rimonta', this.checked)"><span class="knob"></span></label>
+    </div>
+    <div class="row"><span class="mono" style="font-size:11px;color:var(--muted);line-height:1.4;">Suonano un bip e vibrano solo su questo box, e solo dopo circa 10 giri validi. Ogni avviso scatta una volta e si riarma quando la situazione torna normale. Valgono per questo telefono.</span></div>
+  </div>
+  <div class="card">
     <h3>Allarme messaggi</h3>
     <div class="row"><span>Sirena quando arriva un messaggio</span>
       <label class="toggle"><input type="checkbox" id="sirenToggle" onchange="setSirenOn(this.checked)"><span class="knob"></span></label>
@@ -408,17 +442,18 @@
 <!-- Script semplici, non moduli: l'ordine di caricamento e' quello delle
      dipendenze, e le funzioni restano globali come le vogliono gli onclick
      scritti nel markup. core.js per primo, app.js per ultimo. -->
-<script src="js/core.js?v=30"></script>
-<script src="js/push.js?v=30"></script>
-<script src="js/connection.js?v=30"></script>
-<script src="js/autoview.js?v=30"></script>
-<script src="js/fuel.js?v=30"></script>
-<script src="js/boxview.js?v=30"></script>
-<script src="js/timing.js?v=30"></script>
-<script src="js/passo.js?v=30"></script>
-<script src="js/race.js?v=30"></script>
-<script src="js/timer.js?v=30"></script>
-<script src="js/install.js?v=30"></script>
-<script src="js/app.js?v=30"></script>
+<script src="js/core.js?v=31"></script>
+<script src="js/push.js?v=31"></script>
+<script src="js/connection.js?v=31"></script>
+<script src="js/autoview.js?v=31"></script>
+<script src="js/fuel.js?v=31"></script>
+<script src="js/boxview.js?v=31"></script>
+<script src="js/timing.js?v=31"></script>
+<script src="js/passo.js?v=31"></script>
+<script src="js/cruscotto.js?v=31"></script>
+<script src="js/race.js?v=31"></script>
+<script src="js/timer.js?v=31"></script>
+<script src="js/install.js?v=31"></script>
+<script src="js/app.js?v=31"></script>
 </body>
 </html>

@@ -227,6 +227,10 @@ function registerListeners(){
   });
   socket.on('aubStatus', renderAubStatus);
   socket.on('ponteStatus', renderPonteStatus);
+  // per il cruscotto del box: quando e' arrivata l'ultima classifica e in che stato e' il collegamento
+  socket.on('timingUpdate', () => { timingRicevutoAt = Date.now(); });
+  socket.on('aubStatus', (a) => { aubStatoUltimo = a; });
+  socket.on('ponteStatus', (f) => { ponteStatoUltimo = f; });
   socket.on('timerUpdate', applyTimerState);
 }
 
