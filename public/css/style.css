@@ -115,9 +115,10 @@
   .timing-strip .gap, .timing-strip .pos{font-size:clamp(28px,5vw,44px);font-weight:700;line-height:1;height:1.15em;display:flex;align-items:center;justify-content:center;}
   /* Distacchi: bianchi finche' non cambiano; poi verde se la situazione migliora
      (davanti si riduce, dietro aumenta) e giallo se peggiora. */
-  .timing-strip .gap{color:var(--text);font-size:clamp(26px,4.4vw,38px);transition:color .3s;}
-  .timing-strip .gap.g-up{color:var(--green);}
-  .timing-strip .gap.g-down{color:var(--yellow);}
+  /* il colore e' del rettangolo che contiene il distacco, non delle cifre */
+  .timing-strip .gap{color:var(--text);font-size:clamp(26px,4.4vw,38px);align-self:stretch;border-radius:12px;background:transparent;transition:background .3s,color .3s;}
+  .timing-strip .gap.g-up{background:var(--green);color:#0B0D0F;}
+  .timing-strip .gap.g-down{background:var(--yellow);color:#0B0D0F;}
   .timing-strip .lbl{font-size:13px;letter-spacing:.1em;color:var(--muted);}
   .timing-strip .pos{color:#fff;}
   body.night #autoView .timing-strip .pos{color:var(--text);}
