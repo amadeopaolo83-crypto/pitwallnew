@@ -209,7 +209,7 @@
   #autoView.layout-tablet .refuel-btn{display:none;}
   #autoView.layout-tablet .fuel-track{height:min(9vw,11vh);border-radius:10px;}
   #autoView.layout-tablet .fuel-pct{font-size:min(4.2vw,6.6vh);}
-  #autoView.layout-tablet .fuel-autonomy{font-size:min(1.9vw,3.2vh);text-align:center;white-space:nowrap;margin-top:min(1.2vh,10px);}
+  #autoView.layout-tablet .fuel-autonomy{font-size:min(1.5vw,2.8vh);text-align:center;white-space:normal;margin-top:min(1.2vh,10px);}
   #autoView.layout-tablet .quick-grid{grid-area:6/1/9/9;padding:0;gap:8px;}
   #autoView.layout-tablet .quick-btn{font-size:min(2.8vw,5vh);border-radius:14px;min-width:0;padding:4px;}
 

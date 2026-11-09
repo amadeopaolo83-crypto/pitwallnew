@@ -161,6 +161,8 @@ function passoRender(){
   }
   passoRiempiTessere('pa', mio && mio.m);
   passoRenderConfronti();
+  // l'autonomia in giri sull'auto si aggiorna a ogni giro nuovo (cambia il passo)
+  if(role === 'auto' && typeof renderFuelSystemUI === 'function') renderFuelSystemUI();
   if(role === 'box') passoRenderBox();
 }
 

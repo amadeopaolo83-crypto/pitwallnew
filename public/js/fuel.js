@@ -7,6 +7,14 @@ function saveFuelLocal(){
   save('pc_fuel', { code: code, fs: fuelSystem, at: Date.now() });
 }
 
+// " · ~28 giri" accanto ai minuti di autonomia (sull'auto), se si conoscono consumo e passo.
+function autonomiaGiriTxt(){
+  try{
+    const g = (typeof crGiriBenzina === 'function') ? crGiriBenzina() : null;
+    return g != null ? ' \u00b7 ~' + g + ' giri' : '';
+  }catch(e){ return ''; }
+}
+
 function renderFuelSystemUI(){
   const fs = fuelSystem;
   // I campi che si stanno modificando non vanno riscritti dall'aggiornamento
@@ -34,7 +42,7 @@ function renderFuelSystemUI(){
   const autonomyMin = fs.consumptionRatePerHour ? (liveLiters / fs.consumptionRatePerHour) * 60 : null;
   const autonomyTxt = 'Autonomia stimata: ' + (autonomyMin==null ? '—' : Math.round(autonomyMin)+' min');
   if($('autonomyLiveLabel')) $('autonomyLiveLabel').textContent = autonomyTxt;
-  if($('autonomyLiveAuto')) $('autonomyLiveAuto').textContent = autonomyTxt;
+  if($('autonomyLiveAuto')) $('autonomyLiveAuto').textContent = autonomyTxt + autonomiaGiriTxt();
 }
 
 // La velocita' di test del timer gara (x1/x60/x300) acceleta anche il
