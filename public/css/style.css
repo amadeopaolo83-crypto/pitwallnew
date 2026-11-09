@@ -118,6 +118,15 @@
   .timing-strip .gap{color:var(--text);font-size:clamp(26px,4.4vw,38px);transition:color .3s;}
   .timing-strip .gap.g-up{color:var(--green);}
   .timing-strip .gap.g-down{color:var(--yellow);}
+  /* Rettangolo del distacco: e' lo sfondo a cambiare colore (bianco / verde / giallo)
+     e i numeri restano neri, per il massimo contrasto. Vale per telefono e tablet;
+     di notte i colori si attenuano da soli perche' usano le stesse variabili. */
+  .timing-strip .gap{
+    box-sizing:border-box;width:100%;padding:.12em .3em;border-radius:12px;
+    background:var(--text);color:#000;transition:background .3s;
+  }
+  .timing-strip .gap.g-up{background:var(--green);color:#000;}
+  .timing-strip .gap.g-down{background:var(--yellow);color:#000;}
   .timing-strip .lbl{font-size:13px;letter-spacing:.1em;color:var(--muted);}
   .timing-strip .pos{color:#fff;}
   body.night #autoView .timing-strip .pos{color:var(--text);}
