@@ -76,7 +76,8 @@ function renderFlashEditor(){
       <input type="text" value="${p.text}" oninput="flashPresets[${i}].text=this.value;flashSalva()">
       <input type="color" value="${p.color}" oninput="flashPresets[${i}].color=this.value;flashSalva()">
       <input type="number" value="${p.duration}" min="2" max="60" oninput="flashPresets[${i}].duration=+this.value;flashSalva()" title="secondi">
-      <button class="btn small primary" onclick="sendFlashPreset(${i}, this)">Invia</button>`;
+      <button class="btn small primary" onclick="sendFlashPreset(${i}, this)">Invia</button>
+      <button class="btn small" onclick="eliminaFlashPreset(${i}, this)" title="Elimina" aria-label="Elimina messaggio">\u2715</button>`;
     el.appendChild(row);
   });
 }
@@ -92,6 +93,30 @@ function flashSalva(){
 
 function addFlashPreset(){
   flashPresets.push({text:'NUOVO MESSAGGIO', color:'#2FB6C4', duration:6});
+  flashSalva();
+  renderFlashEditor();
+}
+
+// Elimina un messaggio: serve un secondo tocco entro 3 secondi per evitare errori.
+// Ne resta sempre almeno uno.
+let flashEliminaPronto = null;
+function eliminaFlashPreset(i, btnEl){
+  if(flashPresets.length <= 1){
+    btnEl.textContent = 'Ne serve almeno 1';
+    setTimeout(() => { btnEl.textContent = '\u2715'; }, 1500);
+    return;
+  }
+  if(flashEliminaPronto !== i){
+    flashEliminaPronto = i;
+    btnEl.textContent = 'Sicuro?';
+    btnEl.classList.add('sent-confirm');
+    setTimeout(() => {
+      if(flashEliminaPronto === i){ flashEliminaPronto = null; btnEl.textContent = '\u2715'; btnEl.classList.remove('sent-confirm'); }
+    }, 3000);
+    return;
+  }
+  flashEliminaPronto = null;
+  flashPresets.splice(i, 1);
   flashSalva();
   renderFlashEditor();
 }
