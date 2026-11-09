@@ -218,13 +218,14 @@ function crAllarmi(){
 }
 
 // ---------- consumo imparato dai rifornimenti ----------
-// Se si rifornisce "fino al pieno" partendo da un serbatoio pieno, i litri aggiunti sono
-// quelli consumati nel tempo passato in pista: litri / ore = consumo reale.
+// Si conosce il livello a un certo punto (serbatoio pieno oppure litri impostati a mano).
+// Rifornendo "fino al pieno" il consumo e' livello + litri aggiunti - capienza, diviso le
+// ore passate in pista (dal momento in cui si preme "In pista", non dallo zero del timing).
 
 function crStatoConsumo(){
   const s = load(CR_CONSUMO, null);
   if(s && s.code === code) return s;
-  return { code: code, lastFull: null, sec: 0, l: 0, h: 0, n: 0 };
+  return { code: code, liv: null, sec: 0, l: 0, h: 0, n: 0 };
 }
 
 function crSalvaConsumo(s){ try{ save(CR_CONSUMO, s); }catch(e){} }
@@ -238,7 +239,7 @@ function crSecSessione(){
 // Si parte in pista: se il serbatoio e' pieno e non si sa altro, e' il punto di partenza.
 function consumoInizioSessione(){
   const s = crStatoConsumo();
-  if(s.lastFull == null && fuelSystem.currentLiters >= fuelSystem.tankCapacityLiters * 0.98){ s.lastFull = true; s.sec = 0; crSalvaConsumo(s); }
+  if(s.liv == null && fuelSystem.currentLiters >= fuelSystem.tankCapacityLiters * 0.98){ s.liv = fuelSystem.currentLiters; s.sec = 0; crSalvaConsumo(s); }
 }
 
 // Si rientra ai box: il tempo in pista si somma.
@@ -251,7 +252,7 @@ function consumoFineSessione(){
 // Livello di partenza impostato a mano.
 function consumoLivelloImpostato(litri){
   const s = crStatoConsumo();
-  s.lastFull = litri >= fuelSystem.tankCapacityLiters * 0.98;
+  s.liv = litri;
   s.sec = 0;
   crSalvaConsumo(s);
 }
@@ -261,12 +262,13 @@ function consumoImpara(aggiunti, pieno){
   const s = crStatoConsumo();
   const ore = (s.sec + crSecSessione()) / 3600;
   let imparato = false;
-  if(pieno && s.lastFull && aggiunti > 0 && ore >= 0.15){
-    s.l += aggiunti; s.h += ore; s.n += 1;
+  const consumati = s.liv != null ? s.liv + aggiunti - fuelSystem.tankCapacityLiters : 0;
+  if(pieno && consumati > 0 && ore >= 0.15){
+    s.l += consumati; s.h += ore; s.n += 1;
     fuelSystem.consumptionRatePerHour = s.l / s.h;
     imparato = true;
   }
-  s.lastFull = Boolean(pieno);
+  s.liv = pieno ? fuelSystem.tankCapacityLiters : null;
   s.sec = 0;
   crSalvaConsumo(s);
   return imparato;
@@ -277,7 +279,7 @@ function crRenderConsumo(){
   if(!el) return;
   const s = crStatoConsumo();
   el.textContent = s.n ? 'Consumo imparato: ' + (s.l / s.h).toFixed(1) + ' L/ora (da ' + s.n + (s.n === 1 ? ' rifornimento' : ' rifornimenti') + ')'
-    : 'Il consumo si impara da solo: rifornisci fino al pieno partendo da un serbatoio pieno.';
+    : 'Il consumo si impara da solo: imposta il livello di partenza (o parti col pieno), premi "In pista" quando esce, poi rifornisci fino al pieno.';
 }
 
 // ---------- disegno ----------
